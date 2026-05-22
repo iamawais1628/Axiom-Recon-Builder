@@ -4,47 +4,44 @@ import '../styles/ReconciliationTool.css';
 export default function ReconciliationTool() {
   const [bankCsv, setBankCsv] = useState('');
   const [erpCsv, setErpCsv] = useState('');
+  const [bankFile, setBankFile] = useState(null);
+  const [erpFile, setErpFile] = useState(null);
+  const [sessionName, setSessionName] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadMode, setUploadMode] = useState('paste'); // 'paste' or 'file'
 
-  const handleProcess = async () => {
+  const handlePasteProcess = async () => {
     setLoading(true);
     setError('');
     setResults(null);
     
     try {
-      // For now, show message since backend isn't running yet
       if (!bankCsv || !erpCsv) {
         setError('Please paste both bank and ERP CSVs');
         setLoading(false);
         return;
       }
 
-      // When backend is ready, uncomment this:
+      // In production, uncomment this to call actual API
       /*
       const response = await fetch('http://localhost:5000/api/upload-and-match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bank_csv: bankCsv,
-          erp_csv: erpCsv
+          erp_csv: erpCsv,
+          session_name: sessionName || 'Reconciliation'
         })
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setError(data.message || 'Error processing');
-        return;
-      }
-      
-      setResults(data);
       */
       
-      // For now, show demo data
+      // Demo data for now
       setResults({
         status: 'success',
+        session_id: 1,
+        session_name: sessionName || 'Reconciliation',
         total_bank: 5,
         total_erp: 5,
         matched: 5,
@@ -61,9 +58,70 @@ export default function ReconciliationTool() {
           }
         ]
       });
-      
     } catch (err) {
       setError('Connection error: ' + err.message);
+    }
+    
+    setLoading(false);
+  };
+
+  const handleFileUpload = async (e) => {
+    setLoading(true);
+    setError('');
+    setResults(null);
+    
+    try {
+      if (!bankFile || !erpFile) {
+        setError('Please select both bank and ERP CSV files');
+        setLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('bank_file', bankFile);
+      formData.append('erp_file', erpFile);
+      formData.append('session_name', sessionName || 'File Upload Reconciliation');
+
+      // In production, uncomment this:
+      /*
+      const response = await fetch('http://localhost:5000/api/upload-file', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setError(data.message || 'Error processing files');
+        return;
+      }
+      
+      setResults(data);
+      */
+      
+      // Demo data for now
+      setResults({
+        status: 'success',
+        session_id: 2,
+        session_name: sessionName || 'File Upload Reconciliation',
+        total_bank: 10,
+        total_erp: 10,
+        matched: 10,
+        unmatched: 0,
+        match_rate: 100,
+        average_confidence: 94.8,
+        bank_file: {
+          filename: bankFile.name,
+          size_kb: (bankFile.size / 1024).toFixed(2)
+        },
+        erp_file: {
+          filename: erpFile.name,
+          size_kb: (erpFile.size / 1024).toFixed(2)
+        },
+        matches: []
+      });
+    } catch (err) {
+      setError('Upload error: ' + err.message);
     }
     
     setLoading(false);
@@ -72,17 +130,15 @@ export default function ReconciliationTool() {
   const handleDownload = () => {
     if (!results) return;
     
-    // Create CSV report
     let csv = 'Bank Amount,Bank Description,ERP Amount,ERP Description,Confidence\n';
     
     results.matches.forEach(m => {
       csv += `${m.bank_amount},"${m.bank_desc}",${m.erp_amount},"${m.erp_desc}",${m.confidence}%\n`;
     });
     
-    // Download
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv));
-    element.setAttribute('download', 'reconciliation_results.csv');
+    element.setAttribute('download', `reconciliation_${results.session_id}.csv`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -97,63 +153,162 @@ export default function ReconciliationTool() {
       </header>
 
       <main className="main-content">
-        {/* Input Section */}
-        <section className="input-section">
-          <div className="inputs-grid">
-            {/* Bank CSV Input */}
-            <div className="input-group">
-              <label htmlFor="bank-csv">
-                <strong>Bank CSV</strong>
-                <span className="hint">Paste bank transactions (amount, description, date)</span>
-              </label>
-              <textarea
-                id="bank-csv"
-                value={bankCsv}
-                onChange={(e) => setBankCsv(e.target.value)}
-                placeholder="amount,description,date&#10;1000.00,ABC Corp Payment,2024-01-15&#10;500.50,Wire Transfer,2024-01-16"
-                className="textarea"
-              />
-            </div>
-
-            {/* ERP CSV Input */}
-            <div className="input-group">
-              <label htmlFor="erp-csv">
-                <strong>ERP CSV</strong>
-                <span className="hint">Paste accounting records (amount, description, date)</span>
-              </label>
-              <textarea
-                id="erp-csv"
-                value={erpCsv}
-                onChange={(e) => setErpCsv(e.target.value)}
-                placeholder="amount,description,date&#10;1000.00,Invoice ABC Corp,2024-01-15&#10;500.50,Payment XYZ,2024-01-16"
-                className="textarea"
-              />
-            </div>
-          </div>
-
-          {/* Process Button */}
-          <div className="button-group">
-            <button
-              onClick={handleProcess}
-              disabled={loading || !bankCsv || !erpCsv}
-              className={`btn btn-primary ${loading ? 'loading' : ''}`}
-            >
-              {loading ? '⏳ Processing...' : '⚡ Process & Match'}
-            </button>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="error-box">
-              <span>⚠️ Error: {error}</span>
-            </div>
-          )}
+        {/* Mode Selector */}
+        <section className="mode-selector">
+          <button
+            className={`mode-btn ${uploadMode === 'paste' ? 'active' : ''}`}
+            onClick={() => setUploadMode('paste')}
+          >
+            📋 Paste CSV
+          </button>
+          <button
+            className={`mode-btn ${uploadMode === 'file' ? 'active' : ''}`}
+            onClick={() => setUploadMode('file')}
+          >
+            📁 Upload File
+          </button>
         </section>
+
+        {/* Paste Mode */}
+        {uploadMode === 'paste' && (
+          <section className="input-section">
+            <div className="inputs-grid">
+              <div className="input-group">
+                <label htmlFor="bank-csv">
+                  <strong>Bank CSV</strong>
+                  <span className="hint">Paste bank transactions</span>
+                </label>
+                <textarea
+                  id="bank-csv"
+                  value={bankCsv}
+                  onChange={(e) => setBankCsv(e.target.value)}
+                  placeholder="amount,description,date&#10;1000.00,ABC Corp,2024-01-15"
+                  className="textarea"
+                />
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="erp-csv">
+                  <strong>ERP CSV</strong>
+                  <span className="hint">Paste accounting records</span>
+                </label>
+                <textarea
+                  id="erp-csv"
+                  value={erpCsv}
+                  onChange={(e) => setErpCsv(e.target.value)}
+                  placeholder="amount,description,date&#10;1000.00,Invoice ABC,2024-01-15"
+                  className="textarea"
+                />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="session-name">
+                <strong>Session Name</strong>
+                <span className="hint">Optional: Name for this reconciliation</span>
+              </label>
+              <input
+                id="session-name"
+                type="text"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="e.g., January 2024 Reconciliation"
+                className="input-text"
+              />
+            </div>
+
+            <div className="button-group">
+              <button
+                onClick={handlePasteProcess}
+                disabled={loading || !bankCsv || !erpCsv}
+                className={`btn btn-primary ${loading ? 'loading' : ''}`}
+              >
+                {loading ? '⏳ Processing...' : '⚡ Process & Match'}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* File Upload Mode */}
+        {uploadMode === 'file' && (
+          <section className="input-section">
+            <div className="file-inputs-grid">
+              <div className="file-input-group">
+                <label htmlFor="bank-file">
+                  <strong>Bank CSV File</strong>
+                  <span className="hint">Select .csv file</span>
+                </label>
+                <input
+                  id="bank-file"
+                  type="file"
+                  accept=".csv,.txt"
+                  onChange={(e) => setBankFile(e.target.files[0])}
+                  className="file-input"
+                />
+                {bankFile && (
+                  <div className="file-info">
+                    📄 {bankFile.name} ({(bankFile.size / 1024).toFixed(2)} KB)
+                  </div>
+                )}
+              </div>
+
+              <div className="file-input-group">
+                <label htmlFor="erp-file">
+                  <strong>ERP CSV File</strong>
+                  <span className="hint">Select .csv file</span>
+                </label>
+                <input
+                  id="erp-file"
+                  type="file"
+                  accept=".csv,.txt"
+                  onChange={(e) => setErpFile(e.target.files[0])}
+                  className="file-input"
+                />
+                {erpFile && (
+                  <div className="file-info">
+                    📄 {erpFile.name} ({(erpFile.size / 1024).toFixed(2)} KB)
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="session-name-file">
+                <strong>Session Name</strong>
+                <span className="hint">Optional: Name for this reconciliation</span>
+              </label>
+              <input
+                id="session-name-file"
+                type="text"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="e.g., January 2024 Reconciliation"
+                className="input-text"
+              />
+            </div>
+
+            <div className="button-group">
+              <button
+                onClick={handleFileUpload}
+                disabled={loading || !bankFile || !erpFile}
+                className={`btn btn-primary ${loading ? 'loading' : ''}`}
+              >
+                {loading ? '⏳ Uploading...' : '📤 Upload & Process'}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="error-box">
+            <span>⚠️ Error: {error}</span>
+          </div>
+        )}
 
         {/* Results Section */}
         {results && (
           <section className="results-section">
-            {/* Statistics Cards */}
             <div className="stats-grid">
               <div className="stat-card">
                 <p className="stat-label">Total Transactions</p>
@@ -181,8 +336,7 @@ export default function ReconciliationTool() {
               </div>
             </div>
 
-            {/* Matches Table */}
-            {results.matches.length > 0 && (
+            {results.matches && results.matches.length > 0 && (
               <div className="matches-section">
                 <div className="section-header">
                   <h2>Suggested Matches ({results.matches.length})</h2>
@@ -221,44 +375,37 @@ export default function ReconciliationTool() {
                 </div>
               </div>
             )}
-
-            {/* Empty State */}
-            {results.matches.length === 0 && (
-              <div className="empty-state">
-                <p>❌ No matches found. Check your CSV data.</p>
-              </div>
-            )}
           </section>
         )}
 
-        {/* Welcome Section (when no results) */}
+        {/* Welcome Section */}
         {!results && !error && (
           <section className="welcome-section">
             <div className="welcome-box">
-              <h2>📋 How It Works</h2>
-              <ol>
-                <li><strong>Paste Bank CSV</strong> - Export from your bank (amount, description, date)</li>
-                <li><strong>Paste ERP CSV</strong> - Export from accounting software</li>
-                <li><strong>Click Process</strong> - AI matches transactions automatically</li>
-                <li><strong>Review Results</strong> - See confidence scores and download report</li>
-              </ol>
+              <h2>📋 CSV Format Required</h2>
+              <p><strong>Columns:</strong> amount, description, date</p>
+              <p><strong>Date Format:</strong> YYYY-MM-DD</p>
+              <pre>amount,description,date
+1000.00,ABC Corp,2024-01-15
+500.50,Wire Transfer,2024-01-16</pre>
             </div>
 
             <div className="welcome-box">
-              <h2>📊 CSV Format Required</h2>
-              <p><strong>Columns:</strong> amount, description, date</p>
-              <p><strong>Date Format:</strong> YYYY-MM-DD</p>
-              <p><strong>Example:</strong></p>
-              <pre>amount,description,date
-1000.00,ABC Corp Payment,2024-01-15
-500.50,Wire Transfer,2024-01-16</pre>
+              <h2>✨ Features</h2>
+              <ul>
+                <li>📋 Paste CSV data directly</li>
+                <li>📁 Upload CSV files (up to 5MB)</li>
+                <li>🤖 AI-powered matching</li>
+                <li>💾 Save results to database</li>
+                <li>📥 Download reconciliation report</li>
+              </ul>
             </div>
           </section>
         )}
       </main>
 
       <footer className="footer">
-        <p>ReconAI v1.0 | Powered by AI Matching Algorithm</p>
+        <p>ReconAI v1.1 | File Upload Enabled</p>
       </footer>
     </div>
   );
