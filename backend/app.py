@@ -26,6 +26,11 @@ from admin_db import (
     update_user_role, toggle_user_active, get_user_stats,
     get_team_members, get_admin_dashboard_stats, get_user_activity_log
 )
+from rules_engine import RULE_TEMPLATES
+from rules_db import (
+    create_rule, get_user_rules, get_rule, update_rule, delete_rule,
+    toggle_rule, get_rule_statistics
+)
 
 load_dotenv()
 
@@ -276,6 +281,23 @@ def delete_account():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/auth/permissions', methods=['GET'])
+@token_required
+def get_permissions():
+    """Get current user's permissions"""
+    try:
+        user_role = request.user.get('role', 'user')
+        permissions = get_user_permissions(user_role)
+        
+        return jsonify({
+            'status': 'success',
+            'role': user_role,
+            'permissions': permissions
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ===== MAIN ENDPOINTS =====
 
 @app.route('/', methods=['GET'])
@@ -283,7 +305,7 @@ def index():
     """API documentation"""
     return jsonify({
         'name': 'ReconAI API',
-        'version': '1.3',
+        'version': '1.4',
         'features': [
             'CSV paste & match',
             'CSV file upload',
@@ -291,7 +313,8 @@ def index():
             'Match confirmation',
             'Reconciliation history',
             'Analytics & trends',
-            'User authentication'
+            'User authentication',
+            'Advanced rules engine'
         ],
         'endpoints': {
             'Authentication': {
@@ -306,6 +329,16 @@ def index():
             'Reconciliation': {
                 'POST /api/upload-and-match': 'Paste CSVs (auth required)',
                 'POST /api/upload-file': 'Upload files (auth required)'
+            },
+            'Rules Engine': {
+                'GET /api/rules': 'Get all user rules (auth required)',
+                'POST /api/rules': 'Create new rule (auth required)',
+                'GET /api/rules/<id>': 'Get specific rule (auth required)',
+                'PUT /api/rules/<id>': 'Update rule (auth required)',
+                'DELETE /api/rules/<id>': 'Delete rule (auth required)',
+                'PUT /api/rules/<id>/toggle': 'Enable/disable rule (auth required)',
+                'GET /api/rules/stats': 'Get rule statistics (auth required)',
+                'GET /api/rules/templates': 'Get rule templates (auth required)'
             },
             'History & Analytics': {
                 'GET /api/sessions': 'All sessions (auth required)',
@@ -532,6 +565,187 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
         print(f"❌ Error in process_reconciliation: {e}")
         raise
 
+# ===== RULES ENDPOINTS =====
+
+@app.route('/api/rules', methods=['GET'])
+@token_required
+def list_rules():
+    """Get all rules for current user"""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        rules = get_user_rules(request.user['id'], limit=limit)
+        
+        return jsonify({
+            'status': 'success',
+            'count': len(rules),
+            'rules': rules
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules', methods=['POST'])
+@token_required
+def create_new_rule():
+    """Create a new rule"""
+    try:
+        data = request.json
+        
+        name = data.get('name', '').strip()
+        conditions = data.get('conditions', [])
+        action = data.get('action', '').strip()
+        
+        if not name or not action:
+            return jsonify({
+                'error': 'Name and action are required'
+            }), 400
+        
+        rule_id, message = create_rule(
+            request.user['id'],
+            name,
+            conditions,
+            action,
+            enabled=True
+        )
+        
+        if not rule_id:
+            return jsonify({'error': message}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'message': message,
+            'rule_id': rule_id
+        }), 201
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules/<int:rule_id>', methods=['GET'])
+@token_required
+def get_single_rule(rule_id):
+    """Get a specific rule"""
+    try:
+        rule = get_rule(rule_id)
+        
+        if not rule:
+            return jsonify({'error': 'Rule not found'}), 404
+        
+        if rule['user_id'] != request.user['id']:
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        return jsonify({
+            'status': 'success',
+            'rule': rule
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules/<int:rule_id>', methods=['PUT'])
+@token_required
+def update_single_rule(rule_id):
+    """Update a rule"""
+    try:
+        data = request.json
+        
+        rule = get_rule(rule_id)
+        if not rule or rule['user_id'] != request.user['id']:
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        success, message = update_rule(
+            rule_id,
+            name=data.get('name'),
+            conditions=data.get('conditions'),
+            action=data.get('action'),
+            enabled=data.get('enabled')
+        )
+        
+        if not success:
+            return jsonify({'error': message}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'message': message
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules/<int:rule_id>', methods=['DELETE'])
+@token_required
+def delete_single_rule(rule_id):
+    """Delete a rule"""
+    try:
+        rule = get_rule(rule_id)
+        if not rule or rule['user_id'] != request.user['id']:
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        success, message = delete_rule(rule_id)
+        
+        if not success:
+            return jsonify({'error': message}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'message': message
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules/<int:rule_id>/toggle', methods=['PUT'])
+@token_required
+def toggle_single_rule(rule_id):
+    """Enable/disable a rule"""
+    try:
+        rule = get_rule(rule_id)
+        if not rule or rule['user_id'] != request.user['id']:
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        data = request.json
+        enabled = data.get('enabled', True)
+        
+        success, message = toggle_rule(rule_id, enabled)
+        
+        if not success:
+            return jsonify({'error': message}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'message': message
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules/stats', methods=['GET'])
+@token_required
+def rule_statistics():
+    """Get rule statistics for current user"""
+    try:
+        stats = get_rule_statistics(request.user['id'])
+        
+        return jsonify({
+            'status': 'success',
+            'stats': stats
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rules/templates', methods=['GET'])
+@token_required
+def get_templates():
+    """Get pre-built rule templates"""
+    try:
+        return jsonify({
+            'status': 'success',
+            'templates': RULE_TEMPLATES
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ===== ANALYTICS ENDPOINTS =====
 
 @app.route('/api/analytics/stats', methods=['GET'])
@@ -637,7 +851,7 @@ def get_session_matches_endpoint(session_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# ===== LEGACY ENDPOINTS =====
+# ===== MATCH MANAGEMENT ENDPOINTS =====
 
 @app.route('/api/matches', methods=['GET'])
 def get_matches():
@@ -797,25 +1011,6 @@ def admin_toggle_user(user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== USER PERMISSIONS ENDPOINT =====
-
-@app.route('/api/auth/permissions', methods=['GET'])
-@token_required
-def get_permissions():
-    """Get current user's permissions"""
-    try:
-        user_role = request.user.get('role', 'user')
-        permissions = get_user_permissions(user_role)
-        
-        return jsonify({
-            'status': 'success',
-            'role': user_role,
-            'permissions': permissions
-        })
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # ===== USER STATS ENDPOINT =====
 
 @app.route('/api/user/stats', methods=['GET'])
@@ -845,6 +1040,6 @@ def server_error(error):
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    print(f"\n🚀 Starting ReconAI API v1.3 on port {port}")
-    print(f"   Full-featured reconciliation, analytics & authentication\n")
+    print(f"\n🚀 Starting ReconAI API v1.4 on port {port}")
+    print(f"   Full-featured reconciliation, analytics, rules & authentication\n")
     app.run(debug=True, port=port)
