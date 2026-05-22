@@ -21,6 +21,11 @@ from analytics import (
     get_session_details, get_session_matches, get_all_sessions_with_stats,
     get_historical_stats, get_matching_trends, get_match_quality_breakdown, search_sessions
 )
+from permissions import has_permission, get_user_permissions, ROLES
+from admin_db import (
+    update_user_role, toggle_user_active, get_user_stats,
+    get_team_members, get_admin_dashboard_stats, get_user_activity_log
+)
 
 load_dotenv()
 
@@ -295,7 +300,8 @@ def index():
                 'GET /api/auth/profile': 'Get profile (auth required)',
                 'PUT /api/auth/profile': 'Update profile (auth required)',
                 'POST /api/auth/change-password': 'Change password (auth required)',
-                'DELETE /api/auth/delete': 'Delete account (auth required)'
+                'DELETE /api/auth/delete': 'Delete account (auth required)',
+                'GET /api/auth/permissions': 'Get user permissions (auth required)'
             },
             'Reconciliation': {
                 'POST /api/upload-and-match': 'Paste CSVs (auth required)',
@@ -315,6 +321,16 @@ def index():
                 'GET /api/stats': 'Current statistics',
                 'POST /api/match/<id>/confirm': 'Confirm match',
                 'POST /api/match/<id>/reject': 'Reject match'
+            },
+            'User': {
+                'GET /api/user/stats': 'Current user statistics (auth required)'
+            },
+            'Admin': {
+                'GET /api/admin/dashboard': 'Admin dashboard stats (admin only)',
+                'GET /api/admin/users': 'List all users (admin only)',
+                'GET /api/admin/users/<id>': 'Get user details (admin only)',
+                'PUT /api/admin/users/<id>/role': 'Update user role (admin only)',
+                'PUT /api/admin/users/<id>/toggle': 'Enable/disable user (admin only)'
             },
             'System': {
                 'GET /health': 'Health check'
@@ -671,6 +687,153 @@ def reject(match_id):
             return jsonify({'status': 'error'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+# ===== ADMIN ENDPOINTS =====
+
+@app.route('/api/admin/dashboard', methods=['GET'])
+@token_required
+@has_permission('manage_users')
+def admin_dashboard():
+    """Get admin dashboard statistics"""
+    try:
+        stats = get_admin_dashboard_stats()
+        
+        return jsonify({
+            'status': 'success',
+            'stats': stats
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users', methods=['GET'])
+@token_required
+@has_permission('manage_users')
+def admin_list_users():
+    """List all users (admin only)"""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        users = get_team_members(request.user['id'], limit=limit)
+        
+        return jsonify({
+            'status': 'success',
+            'count': len(users),
+            'users': users
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>', methods=['GET'])
+@token_required
+@has_permission('manage_users')
+def admin_get_user(user_id):
+    """Get user details with stats (admin only)"""
+    try:
+        user = get_user(user_id)
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        stats = get_user_stats(user_id)
+        activity = get_user_activity_log(user_id, limit=10)
+        
+        return jsonify({
+            'status': 'success',
+            'user': user,
+            'stats': stats,
+            'recent_activity': activity
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>/role', methods=['PUT'])
+@token_required
+@has_permission('manage_users')
+def admin_update_user_role(user_id):
+    """Update user role (admin only)"""
+    try:
+        data = request.json
+        new_role = data.get('role', '').lower()
+        
+        if not new_role:
+            return jsonify({
+                'error': 'Role is required'
+            }), 400
+        
+        success, message = update_user_role(user_id, new_role)
+        
+        if not success:
+            return jsonify({'error': message}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'message': message
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>/toggle', methods=['PUT'])
+@token_required
+@has_permission('manage_users')
+def admin_toggle_user(user_id):
+    """Enable/disable user account (admin only)"""
+    try:
+        data = request.json
+        active = data.get('active', True)
+        
+        success, message = toggle_user_active(user_id, active)
+        
+        if not success:
+            return jsonify({'error': message}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'message': message
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== USER PERMISSIONS ENDPOINT =====
+
+@app.route('/api/auth/permissions', methods=['GET'])
+@token_required
+def get_permissions():
+    """Get current user's permissions"""
+    try:
+        user_role = request.user.get('role', 'user')
+        permissions = get_user_permissions(user_role)
+        
+        return jsonify({
+            'status': 'success',
+            'role': user_role,
+            'permissions': permissions
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== USER STATS ENDPOINT =====
+
+@app.route('/api/user/stats', methods=['GET'])
+@token_required
+def user_stats():
+    """Get current user's statistics"""
+    try:
+        stats = get_user_stats(request.user['id'])
+        
+        return jsonify({
+            'status': 'success',
+            'stats': stats
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== ERROR HANDLERS =====
 
 @app.errorhandler(404)
 def not_found(error):
