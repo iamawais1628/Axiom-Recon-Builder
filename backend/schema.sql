@@ -1,32 +1,33 @@
--- Transactions table (bank and ERP)
-CREATE TABLE IF NOT EXISTS transactions (
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    source VARCHAR(50) NOT NULL, -- 'bank' or 'erp'
-    amount DECIMAL(15,2) NOT NULL,
-    description TEXT NOT NULL,
-    posting_date DATE NOT NULL,
-    reference VARCHAR(255),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'user', -- 'user', 'admin', 'analyst'
+    active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User reconciliation sessions (tracks which user created which session)
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    reconciliation_session_id INTEGER REFERENCES reconciliation_sessions(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Matches table (results of matching)
-CREATE TABLE IF NOT EXISTS matches (
+-- User login history (audit trail)
+CREATE TABLE IF NOT EXISTS login_history (
     id SERIAL PRIMARY KEY,
-    bank_tx_id INTEGER REFERENCES transactions(id) ON DELETE CASCADE,
-    erp_tx_id INTEGER REFERENCES transactions(id) ON DELETE CASCADE,
-    confidence DECIMAL(5,2),
-    status VARCHAR(50) DEFAULT 'suggested', -- 'suggested', 'confirmed', 'rejected'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    confirmed_at TIMESTAMP
+    user_id INTEGER REFERENCES users(id),
+    login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    user_agent TEXT
 );
 
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_transactions_source ON transactions(source);
-CREATE INDEX IF NOT EXISTS idx_transactions_amount ON transactions(amount);
-CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
-CREATE INDEX IF NOT EXISTS idx_matches_bank_tx ON matches(bank_tx_id);
-CREATE INDEX IF NOT EXISTS idx_matches_erp_tx ON matches(erp_tx_id);
-
--- Test data (optional - comment out if you don't want test data)
--- INSERT INTO transactions (source, amount, description, posting_date)
--- VALUES ('bank', 1000, 'Test Bank Transaction', '2024-01-15');
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_login_history_user_id ON login_history(user_id);
