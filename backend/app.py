@@ -11,13 +11,15 @@ from file_handler import (
     init_upload_folder, save_upload_file, read_csv_file, delete_upload_file,
     validate_csv_content, count_csv_rows, get_file_info
 )
+from analytics import (
+    get_session_details, get_session_matches, get_all_sessions_with_stats,
+    get_historical_stats, get_matching_trends, get_match_quality_breakdown, search_sessions
+)
 
 load_dotenv()
 
 app = Flask(__name__)
-
-# Allow larger file uploads
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 # Initialize on startup
 init_db()
@@ -28,23 +30,38 @@ def index():
     """API documentation"""
     return jsonify({
         'name': 'ReconAI API',
-        'version': '1.1',
+        'version': '1.2',
         'features': [
             'CSV paste & match',
             'CSV file upload',
             'Database storage',
             'Match confirmation',
-            'Reconciliation history'
+            'Reconciliation history',
+            'Analytics & trends'
         ],
         'endpoints': {
-            'GET /health': 'Health check',
-            'POST /api/upload-and-match': 'Paste CSVs and run matching',
-            'POST /api/upload-file': 'Upload CSV files',
-            'GET /api/matches': 'Get all matches',
-            'GET /api/stats': 'Get statistics',
-            'POST /api/match/<id>/confirm': 'Confirm match',
-            'POST /api/match/<id>/reject': 'Reject match',
-            'GET /api/sessions': 'Get reconciliation history'
+            'Reconciliation': {
+                'POST /api/upload-and-match': 'Paste CSVs',
+                'POST /api/upload-file': 'Upload files'
+            },
+            'History & Analytics': {
+                'GET /api/sessions': 'All sessions',
+                'GET /api/sessions/<id>': 'Session details',
+                'GET /api/sessions/<id>/matches': 'Session matches',
+                'GET /api/analytics/stats': 'Overall statistics',
+                'GET /api/analytics/trends': 'Historical trends',
+                'GET /api/analytics/quality': 'Match quality breakdown',
+                'GET /api/analytics/search': 'Search sessions'
+            },
+            'Match Management': {
+                'GET /api/matches': 'All matches',
+                'GET /api/stats': 'Current statistics',
+                'POST /api/match/<id>/confirm': 'Confirm match',
+                'POST /api/match/<id>/reject': 'Reject match'
+            },
+            'System': {
+                'GET /health': 'Health check'
+            }
         }
     })
 
@@ -81,9 +98,7 @@ def health():
 
 @app.route('/api/upload-and-match', methods=['POST'])
 def upload_and_match():
-    """
-    Paste CSVs and run matching (original method)
-    """
+    """Paste CSVs and run matching"""
     try:
         data = request.json
         
@@ -101,23 +116,12 @@ def upload_and_match():
     
     except Exception as e:
         print(f"❌ Error: {e}")
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 400
+        return jsonify({'status': 'error', 'message': str(e)}), 400
 
 @app.route('/api/upload-file', methods=['POST'])
 def upload_file():
-    """
-    Upload CSV files and run matching
-    
-    Expected: multipart/form-data with:
-    - bank_file: CSV file
-    - erp_file: CSV file
-    - session_name: (optional) name for this reconciliation
-    """
+    """Upload CSV files and run matching"""
     try:
-        # Check if files are present
         if 'bank_file' not in request.files or 'erp_file' not in request.files:
             return jsonify({
                 'status': 'error',
@@ -128,7 +132,6 @@ def upload_file():
         erp_file = request.files['erp_file']
         session_name = request.form.get('session_name', 'File Upload Reconciliation')
         
-        # Save files
         print("\n--- Processing File Upload ---")
         bank_path, bank_msg = save_upload_file(bank_file, 'bank')
         erp_path, erp_msg = save_upload_file(erp_file, 'erp')
@@ -140,7 +143,6 @@ def upload_file():
                 'erp_message': erp_msg
             }), 400
         
-        # Read file contents
         bank_csv, bank_read_error = read_csv_file(bank_path)
         erp_csv, erp_read_error = read_csv_file(erp_path)
         
@@ -150,7 +152,6 @@ def upload_file():
                 'message': f"Error reading files: {bank_read_error or erp_read_error}"
             }), 400
         
-        # Validate CSV content
         bank_valid, bank_validate_msg = validate_csv_content(bank_csv)
         erp_valid, erp_validate_msg = validate_csv_content(erp_csv)
         
@@ -161,7 +162,6 @@ def upload_file():
                 'erp_message': erp_validate_msg if not erp_valid else 'Valid'
             }), 400
         
-        # Get file info
         bank_info = get_file_info(bank_path)
         erp_info = get_file_info(erp_path)
         bank_rows = count_csv_rows(bank_csv)
@@ -170,14 +170,11 @@ def upload_file():
         print(f"✓ Bank file: {bank_info['filename']} ({bank_rows} rows)")
         print(f"✓ ERP file: {erp_info['filename']} ({erp_rows} rows)")
         
-        # Process reconciliation
         result = process_reconciliation(bank_csv, erp_csv, session_name)
         
-        # Clean up uploaded files
         delete_upload_file(bank_path)
         delete_upload_file(erp_path)
         
-        # Add file info to response
         result_data = result.get_json()
         result_data['bank_file'] = bank_info
         result_data['erp_file'] = erp_info
@@ -186,17 +183,11 @@ def upload_file():
     
     except Exception as e:
         print(f"❌ Error: {e}")
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 400
+        return jsonify({'status': 'error', 'message': str(e)}), 400
 
 def process_reconciliation(bank_csv, erp_csv, session_name):
-    """
-    Core reconciliation logic (used by both paste and file upload)
-    """
+    """Core reconciliation logic"""
     try:
-        # Parse CSVs
         print("\n--- Parsing CSVs ---")
         bank_txs = parse_csv(bank_csv)
         erp_txs = parse_csv(erp_csv)
@@ -210,19 +201,16 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
                 'message': 'Failed to parse CSV files'
             }), 400
         
-        # Add IDs
         for i, tx in enumerate(bank_txs):
             tx['id'] = i + 1
         
         for i, tx in enumerate(erp_txs):
             tx['id'] = i + 100
         
-        # Run matching
         print("\n--- Running Matching Algorithm ---")
         matches = match_transactions(bank_txs, erp_txs)
         print(f"✓ Found {len(matches)} matches")
         
-        # Calculate stats
         total_bank = len(bank_txs)
         total_erp = len(erp_txs)
         matched = len(matches)
@@ -230,7 +218,6 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
         match_rate = (matched / max(total_bank, total_erp)) * 100 if max(total_bank, total_erp) > 0 else 0
         avg_confidence = sum(m['confidence'] for m in matches) / max(len(matches), 1) if matches else 0
         
-        # Save to database
         print("\n--- Saving to Database ---")
         
         for tx in bank_txs:
@@ -242,13 +229,11 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
         print(f"✓ Saved {total_bank} bank transactions")
         print(f"✓ Saved {total_erp} ERP transactions")
         
-        # Save matches
         for m in matches:
             save_match(m['bank_id'], m['erp_id'], m['confidence'])
         
         print(f"✓ Saved {matched} matches")
         
-        # Save session
         session_id = save_reconciliation_session(
             session_name, total_bank, total_erp, matched, match_rate, avg_confidence
         )
@@ -272,6 +257,112 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
         print(f"❌ Error in process_reconciliation: {e}")
         raise
 
+# ===== ANALYTICS ENDPOINTS =====
+
+@app.route('/api/analytics/stats', methods=['GET'])
+def analytics_stats():
+    """Get overall historical statistics"""
+    try:
+        stats = get_historical_stats()
+        return jsonify({
+            'status': 'success',
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/analytics/trends', methods=['GET'])
+def analytics_trends():
+    """Get historical trends"""
+    try:
+        trends = get_matching_trends()
+        return jsonify({
+            'status': 'success',
+            'count': len(trends),
+            'trends': trends
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/analytics/quality', methods=['GET'])
+def analytics_quality():
+    """Get match quality breakdown"""
+    try:
+        quality = get_match_quality_breakdown()
+        return jsonify({
+            'status': 'success',
+            'quality': quality
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/analytics/search', methods=['GET'])
+def analytics_search():
+    """Search sessions by name"""
+    try:
+        query = request.args.get('q', '')
+        if not query:
+            return jsonify({'error': 'Query parameter q is required'}), 400
+        
+        results = search_sessions(query)
+        return jsonify({
+            'status': 'success',
+            'query': query,
+            'count': len(results),
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ===== SESSION MANAGEMENT ENDPOINTS =====
+
+@app.route('/api/sessions', methods=['GET'])
+def get_sessions_list():
+    """Get all reconciliation sessions"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        sessions = get_all_sessions_with_stats(limit=limit)
+        return jsonify({
+            'status': 'success',
+            'count': len(sessions),
+            'sessions': sessions
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/sessions/<int:session_id>', methods=['GET'])
+def get_session(session_id):
+    """Get details of a specific session"""
+    try:
+        session = get_session_details(session_id)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        return jsonify({
+            'status': 'success',
+            'session': session
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/sessions/<int:session_id>/matches', methods=['GET'])
+def get_session_matches_endpoint(session_id):
+    """Get all matches from a specific session"""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        matches = get_session_matches(session_id, limit=limit)
+        
+        return jsonify({
+            'status': 'success',
+            'session_id': session_id,
+            'count': len(matches),
+            'matches': matches
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ===== LEGACY ENDPOINTS =====
+
 @app.route('/api/matches', methods=['GET'])
 def get_matches():
     """Get all matches from database"""
@@ -287,7 +378,7 @@ def get_matches():
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
-    """Get reconciliation statistics"""
+    """Get current reconciliation statistics"""
     try:
         stats = get_match_stats()
         return jsonify({
@@ -297,11 +388,11 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/api/match/<match_id>/confirm', methods=['POST'])
+@app.route('/api/match/<int:match_id>/confirm', methods=['POST'])
 def confirm(match_id):
     """Confirm a match"""
     try:
-        success = confirm_match(int(match_id))
+        success = confirm_match(match_id)
         if success:
             return jsonify({'status': 'success', 'message': 'Match confirmed'})
         else:
@@ -309,28 +400,15 @@ def confirm(match_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/api/match/<match_id>/reject', methods=['POST'])
+@app.route('/api/match/<int:match_id>/reject', methods=['POST'])
 def reject(match_id):
     """Reject a match"""
     try:
-        success = reject_match(int(match_id))
+        success = reject_match(match_id)
         if success:
             return jsonify({'status': 'success', 'message': 'Match rejected'})
         else:
             return jsonify({'status': 'error'}), 400
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@app.route('/api/sessions', methods=['GET'])
-def get_sessions():
-    """Get all reconciliation sessions"""
-    try:
-        sessions = get_all_sessions()
-        return jsonify({
-            'status': 'success',
-            'count': len(sessions),
-            'sessions': [dict(s) for s in sessions]
-        })
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -344,7 +422,6 @@ def server_error(error):
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    print(f"\n🚀 Starting ReconAI API v1.1 on port {port}")
-    print(f"   http://localhost:{port}")
-    print(f"   File upload enabled (5MB max)\n")
+    print(f"\n🚀 Starting ReconAI API v1.2 on port {port}")
+    print(f"   Full-featured reconciliation & analytics\n")
     app.run(debug=True, port=port)
