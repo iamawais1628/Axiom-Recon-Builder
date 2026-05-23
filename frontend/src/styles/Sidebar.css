@@ -1,11 +1,21 @@
+/* ===== SIDEBAR CONTAINER (FLOATING - FIXED POSITION) ===== */
 .sidebar-container {
-  display: flex;
-  min-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 70px;
+  height: calc(100vh - 70px);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.sidebar-container:hover {
+  pointer-events: auto;
 }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: 80px;
+  height: 100%;
   background: #1F2937;
   color: white;
   display: flex;
@@ -14,6 +24,8 @@
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  overflow: hidden;
 }
 
 .sidebar.expanded {
@@ -30,6 +42,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .sidebar.expanded .sidebar-brand {
@@ -151,6 +164,7 @@
   height: 1px;
   background: #374151;
   margin: 12px 0;
+  flex-shrink: 0;
 }
 
 /* ===== USER SECTION ===== */
@@ -164,6 +178,7 @@
   margin-bottom: 12px;
   justify-content: center;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .sidebar.expanded .sidebar-user {
@@ -227,6 +242,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  flex-shrink: 0;
 }
 
 .btn-sidebar-logout:hover {
