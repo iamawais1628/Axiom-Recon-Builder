@@ -48,42 +48,79 @@ body {
 
 .App {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
 }
 
-/* ===== MAIN CONTENT AREA ===== */
-.app-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: var(--transition);
-}
-
-/* ===== APP HEADER ===== */
+/* ===== APP HEADER (TOPBAR - ALWAYS VISIBLE) ===== */
 .app-header {
   background: var(--sidebar-bg);
   border-bottom: 1px solid #374151;
-  padding: 24px 32px;
+  padding: 20px 32px;
   box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.header-brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #5B5FDE 0%, #10B981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: #4B5563;
 }
 
 .app-header h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: white;
   margin: 0;
+  white-space: nowrap;
 }
 
-/* ===== APP CONTENT ===== */
+/* ===== MAIN CONTENT WRAPPER ===== */
+.app-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== SIDEBAR CONTAINER (FIXED/FLOATING) ===== */
+.sidebar-container {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  height: calc(100vh - 70px);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.sidebar-container:hover {
+  pointer-events: auto;
+}
+
+/* ===== APP CONTENT (FULL WIDTH) ===== */
 .app-content {
   flex: 1;
   overflow-y: auto;
   padding: 32px;
+  width: 100%;
 }
 
 /* ===== PAGE PLACEHOLDER ===== */
@@ -274,11 +311,11 @@ body {
   }
 
   .app-header {
-    padding: 20px 24px;
+    padding: 16px 24px;
   }
 
   .app-header h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
 }
 
@@ -292,7 +329,7 @@ body {
   }
 
   .app-header h1 {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .page-placeholder {
