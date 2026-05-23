@@ -2,7 +2,7 @@ import API_URL from '../config.js';
 import React, { useState } from 'react';
 import '../styles/ReconciliationTool.css';
 
-export default function ReconciliationTool() {
+export default function ReconciliationTool({ token, user }) {
   const [bankCsv, setBankCsv] = useState('');
   const [erpCsv, setErpCsv] = useState('');
   const [bankFile, setBankFile] = useState(null);
@@ -11,7 +11,7 @@ export default function ReconciliationTool() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [uploadMode, setUploadMode] = useState('paste'); // 'paste' or 'file'
+  const [uploadMode, setUploadMode] = useState('paste');
 
   const handlePasteProcess = async () => {
     setLoading(true);
@@ -25,40 +25,28 @@ export default function ReconciliationTool() {
         return;
       }
 
-      // In production, uncomment this to call actual API
-
-      const response = await fetch(`${API_URL}/api/upload-and-match', {
+      const response = await fetch(`${API_URL}/api/upload-and-match`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           bank_csv: bankCsv,
           erp_csv: erpCsv,
           session_name: sessionName || 'Reconciliation'
         })
       });
- 
-      
-      // Demo data for now
-      setResults({
-        status: 'success',
-        session_id: 1,
-        session_name: sessionName || 'Reconciliation',
-        total_bank: 5,
-        total_erp: 5,
-        matched: 5,
-        unmatched: 0,
-        match_rate: 100,
-        average_confidence: 92.5,
-        matches: [
-          {
-            bank_amount: 1000,
-            bank_desc: 'ABC Corp Payment',
-            erp_amount: 1000,
-            erp_desc: 'Invoice from ACME',
-            confidence: 95.2
-          }
-        ]
-      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Error processing CSVs');
+        setLoading(false);
+        return;
+      }
+
+      setResults(data);
     } catch (err) {
       setError('Connection error: ' + err.message);
     }
@@ -83,44 +71,22 @@ export default function ReconciliationTool() {
       formData.append('erp_file', erpFile);
       formData.append('session_name', sessionName || 'File Upload Reconciliation');
 
-      // In production, uncomment this:
-      /*
-      const response = await fetch(`${API_URL}/api/upload-file', {
+      const response = await fetch(`${API_URL}/api/upload-file`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         setError(data.message || 'Error processing files');
         return;
       }
-      
+
       setResults(data);
-      */
-      
-      // Demo data for now
-      setResults({
-        status: 'success',
-        session_id: 2,
-        session_name: sessionName || 'File Upload Reconciliation',
-        total_bank: 10,
-        total_erp: 10,
-        matched: 10,
-        unmatched: 0,
-        match_rate: 100,
-        average_confidence: 94.8,
-        bank_file: {
-          filename: bankFile.name,
-          size_kb: (bankFile.size / 1024).toFixed(2)
-        },
-        erp_file: {
-          filename: erpFile.name,
-          size_kb: (erpFile.size / 1024).toFixed(2)
-        },
-        matches: []
-      });
     } catch (err) {
       setError('Upload error: ' + err.message);
     }
@@ -129,7 +95,7 @@ export default function ReconciliationTool() {
   };
 
   const handleDownload = () => {
-    if (!results) return;
+    if (!results || !results.matches) return;
     
     let csv = 'Bank Amount,Bank Description,ERP Amount,ERP Description,Confidence\n';
     
@@ -406,7 +372,7 @@ export default function ReconciliationTool() {
       </main>
 
       <footer className="footer">
-        <p>ReconAI v1.1 | File Upload Enabled</p>
+        <p>ReconAI v1.1 | Authenticated User: {user?.name || user?.email}</p>
       </footer>
     </div>
   );
