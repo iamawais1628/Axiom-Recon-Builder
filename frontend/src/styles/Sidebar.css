@@ -5,19 +5,19 @@
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-  width: 280px;
-  background: linear-gradient(180deg, #1F2937 0%, #111827 100%);
+  width: 80px;
+  background: #1F2937;
   color: white;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #374151;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 }
 
-.sidebar.collapsed {
-  width: 80px;
+.sidebar.expanded {
+  width: 280px;
 }
 
 /* ===== BRAND ===== */
@@ -29,6 +29,11 @@
   border-bottom: 1px solid #374151;
   cursor: pointer;
   transition: all 0.3s ease;
+  justify-content: center;
+}
+
+.sidebar.expanded .sidebar-brand {
+  justify-content: flex-start;
 }
 
 .sidebar-brand:hover {
@@ -49,33 +54,16 @@
   background-clip: text;
   white-space: nowrap;
   overflow: hidden;
+  animation: fadeIn 0.3s ease;
 }
 
-/* ===== TOGGLE BUTTON ===== */
-.sidebar-toggle {
-  position: absolute;
-  top: 20px;
-  right: -12px;
-  width: 32px;
-  height: 32px;
-  background: #5B5FDE;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(91, 95, 222, 0.3);
-  z-index: 10;
-}
-
-.sidebar-toggle:hover {
-  background: #4B4FCE;
-  box-shadow: 0 6px 16px rgba(91, 95, 222, 0.4);
-  transform: scale(1.1);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ===== NAVIGATION ===== */
@@ -105,6 +93,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   position: relative;
+  justify-content: center;
+}
+
+.sidebar.expanded .nav-item {
+  justify-content: flex-start;
 }
 
 .nav-item:hover {
@@ -130,7 +123,7 @@
 }
 
 .nav-icon {
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -139,6 +132,7 @@
 
 .nav-label {
   flex: 1;
+  animation: fadeIn 0.2s ease;
 }
 
 .nav-badge {
@@ -168,6 +162,12 @@
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
   margin-bottom: 12px;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar.expanded .sidebar-user {
+  justify-content: flex-start;
 }
 
 .user-avatar {
@@ -182,11 +182,18 @@
   font-weight: 700;
   font-size: 14px;
   flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar.expanded .user-avatar {
+  width: 40px;
+  height: 40px;
 }
 
 .user-info {
   flex: 1;
   min-width: 0;
+  animation: fadeIn 0.2s ease;
 }
 
 .user-name {
@@ -229,56 +236,7 @@
 }
 
 .logout-icon {
-  font-size: 16px;
-}
-
-/* ===== MOBILE OVERLAY ===== */
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 1024px) {
-  .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100vh;
-    z-index: 1000;
-  }
-
-  .sidebar.collapsed {
-    transform: translateX(-100%);
-  }
-
-  .sidebar-overlay {
-    display: block;
-  }
-
-  .sidebar.open .sidebar-overlay {
-    display: block;
-  }
-
-  .sidebar.collapsed .sidebar-overlay {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 260px;
-  }
-
-  .sidebar-toggle {
-    display: none;
-  }
+  font-size: 18px;
 }
 
 /* ===== SCROLLBAR ===== */
@@ -297,4 +255,15 @@
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
   background: #6B7280;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+  }
+
+  .sidebar.expanded {
+    width: 260px;
+  }
 }
