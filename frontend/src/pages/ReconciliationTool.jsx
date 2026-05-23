@@ -1,3 +1,4 @@
+import API_URL from '../config.js';
 import React, { useState } from 'react';
 import '../styles/ReconciliationTool.css';
 
@@ -25,8 +26,8 @@ export default function ReconciliationTool() {
       }
 
       // In production, uncomment this to call actual API
-      /*
-      const response = await fetch('http://localhost:5000/api/upload-and-match', {
+
+      const response = await fetch(`${API_URL}/api/upload-and-match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -35,7 +36,7 @@ export default function ReconciliationTool() {
           session_name: sessionName || 'Reconciliation'
         })
       });
-      */
+ 
       
       // Demo data for now
       setResults({
@@ -84,7 +85,7 @@ export default function ReconciliationTool() {
 
       // In production, uncomment this:
       /*
-      const response = await fetch('http://localhost:5000/api/upload-file', {
+      const response = await fetch(`${API_URL}/api/upload-file', {
         method: 'POST',
         body: formData
       });
