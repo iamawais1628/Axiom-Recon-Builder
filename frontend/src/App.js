@@ -49,6 +49,23 @@ function App() {
     setCurrentPage(pageId);
   };
 
+  const getPageTitle = () => {
+    switch(currentPage) {
+      case 'dashboard':
+        return '📊 Dashboard';
+      case 'reconciliation':
+        return '🔄 Reconciliation';
+      case 'history':
+        return '📜 History';
+      case 'rules':
+        return '🎯 Rules Engine';
+      case 'settings':
+        return '⚙️ Settings';
+      default:
+        return '📊 Axiom Recon Builder';
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -72,26 +89,24 @@ function App() {
   // Show App with Sidebar if authenticated
   return (
     <div className="App">
-      <Sidebar 
-        user={user} 
-        onLogout={handleLogout}
-        currentPage={currentPage}
-        onNavigate={handleNavigate}
-      />
-      
-      <div className="app-main">
-        {/* Header */}
-        <div className="app-header">
-          <h1>
-            {currentPage === 'dashboard' && '📊 Dashboard'}
-            {currentPage === 'reconciliation' && '🔄 Reconciliation'}
-            {currentPage === 'history' && '📜 History'}
-            {currentPage === 'rules' && '🎯 Rules Engine'}
-            {currentPage === 'settings' && '⚙️ Settings'}
-          </h1>
-        </div>
+      {/* Header - Always visible, not affected by sidebar */}
+      <div className="app-header">
+        <div className="header-brand">📊 Axiom Recon Builder</div>
+        <div className="header-divider" />
+        <h1>{getPageTitle()}</h1>
+      </div>
 
-        {/* Content */}
+      {/* Main Content Area */}
+      <div className="app-main">
+        {/* Floating Sidebar */}
+        <Sidebar 
+          user={user} 
+          onLogout={handleLogout}
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+        />
+
+        {/* Content Area - Full width, not affected by sidebar */}
         <div className="app-content">
           {currentPage === 'reconciliation' && (
             <ReconciliationTool token={token} user={user} />
