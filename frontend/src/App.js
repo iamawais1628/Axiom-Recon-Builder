@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import ReconciliationTool from './pages/ReconciliationTool';
+import Settings from './pages/Settings';
 import Sidebar from './components/Sidebar';
 import './App.css';
 
@@ -83,9 +84,9 @@ function App() {
         <div className="app-header">
           <h1>
             {currentPage === 'dashboard' && '📊 Dashboard'}
-            {currentPage === 'reconciliation' && '⚙️ Reconciliation'}
-            {currentPage === 'history' && '📁 History'}
-            {currentPage === 'rules' && '⚡ Rules Engine'}
+            {currentPage === 'reconciliation' && '🔄 Reconciliation'}
+            {currentPage === 'history' && '📜 History'}
+            {currentPage === 'rules' && '🎯 Rules Engine'}
             {currentPage === 'settings' && '⚙️ Settings'}
           </h1>
         </div>
@@ -94,6 +95,10 @@ function App() {
         <div className="app-content">
           {currentPage === 'reconciliation' && (
             <ReconciliationTool token={token} user={user} />
+          )}
+          
+          {currentPage === 'settings' && (
+            <Settings token={token} user={user} />
           )}
           
           {currentPage === 'dashboard' && (
@@ -105,22 +110,15 @@ function App() {
           
           {currentPage === 'history' && (
             <div className="page-placeholder">
-              <h2>📁 Reconciliation History</h2>
+              <h2>📜 Reconciliation History</h2>
               <p>View all past reconciliations here...</p>
             </div>
           )}
           
           {currentPage === 'rules' && (
             <div className="page-placeholder">
-              <h2>⚡ Rules Engine</h2>
+              <h2>🎯 Rules Engine</h2>
               <p>Manage your matching rules here...</p>
-            </div>
-          )}
-          
-          {currentPage === 'settings' && (
-            <div className="page-placeholder">
-              <h2>⚙️ Settings</h2>
-              <p>Configure your account and preferences...</p>
             </div>
           )}
         </div>
