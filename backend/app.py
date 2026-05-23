@@ -310,7 +310,7 @@ def get_permissions():
 def index():
     """API documentation"""
     return jsonify({
-        'name': 'ReconAI API',
+        'name': 'Axiom Recon BuilderAPI',
         'version': '1.4',
         'features': [
             'CSV paste & match',
@@ -1046,6 +1046,6 @@ def server_error(error):
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    print(f"\n🚀 Starting ReconAI API v1.4 on port {port}")
+    print(f"\n🚀 Starting Axiom Recon BuilderAPI v1.4 on port {port}")
     print(f"   Full-featured reconciliation, analytics, rules & authentication\n")
     app.run(debug=True, port=port)
