@@ -1,3 +1,2 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
+const API_URL = 'https://web-production-13b2b.up.railway.app';
 export default API_URL;
