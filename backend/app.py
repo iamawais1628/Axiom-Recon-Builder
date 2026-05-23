@@ -3,6 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from functools import wraps
 import os
 from dotenv import load_dotenv
@@ -39,6 +40,7 @@ from backend.rules_db import (
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 # Initialize on startup
