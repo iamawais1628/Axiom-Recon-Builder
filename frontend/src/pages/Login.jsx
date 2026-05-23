@@ -57,7 +57,7 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>🤖 ReconAI</h1>
+        <h1>🤖 Axiom Recon Builder</h1>
         
         <div className="auth-tabs">
           <button
