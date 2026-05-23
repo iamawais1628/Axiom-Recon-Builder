@@ -19,7 +19,7 @@ export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
         {/* Brand */}
         <div className="sidebar-brand">
           <div className="brand-logo">📊</div>
-          {isOpen && <div className="brand-text">Axiom Recon</div>}
+          {isOpen && <div className="brand-text">Axiom Recon Builder</div>}
         </div>
 
         {/* Toggle Button */}
