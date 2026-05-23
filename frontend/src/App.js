@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import ReconciliationTool from './pages/ReconciliationTool';
+import Sidebar from './components/Sidebar';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('reconciliation');
 
   useEffect(() => {
-    // Check if user is already logged in (stored in localStorage)
+    // Check if user is already logged in
     const savedToken = localStorage.getItem('auth_token');
     const savedUser = localStorage.getItem('user');
     
@@ -32,6 +34,7 @@ function App() {
     setUser(user);
     localStorage.setItem('auth_token', token);
     localStorage.setItem('user', JSON.stringify(user));
+    setCurrentPage('reconciliation');
   };
 
   const handleLogout = () => {
@@ -41,6 +44,10 @@ function App() {
     localStorage.removeItem('user');
   };
 
+  const handleNavigate = (pageId) => {
+    setCurrentPage(pageId);
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -48,7 +55,8 @@ function App() {
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        fontSize: '18px'
+        fontSize: '18px',
+        background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)'
       }}>
         Loading...
       </div>
@@ -60,37 +68,63 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // Show Reconciliation Tool if authenticated
+  // Show App with Sidebar if authenticated
   return (
     <div className="App">
-      <div style={{
-        padding: '15px 20px',
-        borderBottom: '1px solid #ddd',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <h2 style={{ margin: 0 }}>🤖 Axiom Recon Builder</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <span>Welcome, <strong>{user.name || user.email}</strong></span>
-          <button 
-            onClick={handleLogout}
-            style={{
-              padding: '8px 15px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Logout
-          </button>
+      <Sidebar 
+        user={user} 
+        onLogout={handleLogout}
+        currentPage={currentPage}
+        onNavigate={handleNavigate}
+      />
+      
+      <div className="app-main">
+        {/* Header */}
+        <div className="app-header">
+          <h1>
+            {currentPage === 'dashboard' && '📊 Dashboard'}
+            {currentPage === 'reconciliation' && '⚙️ Reconciliation'}
+            {currentPage === 'history' && '📁 History'}
+            {currentPage === 'rules' && '⚡ Rules Engine'}
+            {currentPage === 'settings' && '⚙️ Settings'}
+          </h1>
+        </div>
+
+        {/* Content */}
+        <div className="app-content">
+          {currentPage === 'reconciliation' && (
+            <ReconciliationTool token={token} user={user} />
+          )}
+          
+          {currentPage === 'dashboard' && (
+            <div className="page-placeholder">
+              <h2>📊 Dashboard</h2>
+              <p>Dashboard content coming soon...</p>
+            </div>
+          )}
+          
+          {currentPage === 'history' && (
+            <div className="page-placeholder">
+              <h2>📁 Reconciliation History</h2>
+              <p>View all past reconciliations here...</p>
+            </div>
+          )}
+          
+          {currentPage === 'rules' && (
+            <div className="page-placeholder">
+              <h2>⚡ Rules Engine</h2>
+              <p>Manage your matching rules here...</p>
+            </div>
+          )}
+          
+          {currentPage === 'settings' && (
+            <div className="page-placeholder">
+              <h2>⚙️ Settings</h2>
+              <p>Configure your account and preferences...</p>
+            </div>
+          )}
         </div>
       </div>
-      <ReconciliationTool token={token} user={user} />
     </div>
   );
 }
