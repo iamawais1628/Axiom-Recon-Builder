@@ -24,7 +24,7 @@
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   padding: 24px 16px;
   border-bottom: 1px solid #374151;
   cursor: pointer;
@@ -91,7 +91,7 @@
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 12px 14px;
   background: transparent;
   color: #D1D5DB;
@@ -163,7 +163,7 @@
 .sidebar-user {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
@@ -208,7 +208,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   padding: 12px 14px;
   background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
