@@ -115,7 +115,7 @@ export default function ReconciliationTool({ token, user }) {
   return (
     <div className="container">
       <header className="header">
-        <h1>🤖 ReconAI</h1>
+        <h1>🤖 Axiom Recon Builder</h1>
         <p>AI-Powered Reconciliation Tool</p>
       </header>
 
@@ -372,7 +372,7 @@ export default function ReconciliationTool({ token, user }) {
       </main>
 
       <footer className="footer">
-        <p>ReconAI v1.1 | Authenticated User: {user?.name || user?.email}</p>
+        <p>Axiom Recon Builder v1.1 | Authenticated User: {user?.name || user?.email}</p>
       </footer>
     </div>
   );
