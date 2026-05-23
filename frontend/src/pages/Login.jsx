@@ -23,27 +23,35 @@ export default function Login({ onLoginSuccess }) {
         ? { email, password, name }
         : { email, password };
 
-      // For now, show demo
-      if (email && password && (!isSignup || name)) {
-        setSuccess(`${isSignup ? 'Account created' : 'Login successful'}! Redirecting...`);
-        
-        setTimeout(() => {
-          onLoginSuccess({
-            token: 'demo-token-' + Math.random(),
-            user: {
-              email,
-              name: name || email.split('@')[0]
-            }
-          });
-        }, 1000);
-      } else {
-        setError('Please fill in all fields');
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'An error occurred');
+        setLoading(false);
+        return;
       }
+
+      setSuccess(`${isSignup ? 'Account created' : 'Login successful'}! Redirecting...`);
+      
+      setTimeout(() => {
+        onLoginSuccess({
+          token: data.token,
+          user: data.user
+        });
+      }, 1000);
+
     } catch (err) {
       setError('Error: ' + err.message);
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -77,6 +85,7 @@ export default function Login({ onLoginSuccess }) {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 className="form-input"
+                required
               />
             </div>
           )}
@@ -90,6 +99,7 @@ export default function Login({ onLoginSuccess }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@example.com"
               className="form-input"
+              required
             />
           </div>
 
@@ -102,6 +112,7 @@ export default function Login({ onLoginSuccess }) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="form-input"
+              required
             />
             {isSignup && (
               <p className="password-hint">
@@ -121,10 +132,6 @@ export default function Login({ onLoginSuccess }) {
             {loading ? 'Loading...' : isSignup ? 'Create Account' : 'Login'}
           </button>
         </form>
-
-        <div className="demo-note">
-          <p>💡 Demo: Use any email/password to test</p>
-        </div>
       </div>
     </div>
   );
