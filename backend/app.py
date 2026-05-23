@@ -2,32 +2,32 @@ from flask import Flask, jsonify, request
 from functools import wraps
 import os
 from dotenv import load_dotenv
-from auth import create_token, verify_token, validate_email, validate_password
-from user_db import (
+from backend.auth import create_token, verify_token, validate_email, validate_password
+from backend.user_db import (
     create_user, authenticate_user, get_user, update_user_profile,
     change_password, delete_user, list_users
 )
-from csv_parser import parse_csv
-from matching import match_transactions
-from db import (
+from backend.csv_parser import parse_csv
+from backend.matching import match_transactions
+from backend.db import (
     init_db, save_transaction, save_match, confirm_match, reject_match,
     get_all_matches, get_match_stats, save_reconciliation_session, get_all_sessions
 )
-from file_handler import (
+from backend.file_handler import (
     init_upload_folder, save_upload_file, read_csv_file, delete_upload_file,
     validate_csv_content, count_csv_rows, get_file_info
 )
-from analytics import (
+from backend.analytics import (
     get_session_details, get_session_matches, get_all_sessions_with_stats,
     get_historical_stats, get_matching_trends, get_match_quality_breakdown, search_sessions
 )
-from permissions import has_permission, get_user_permissions, ROLES
-from admin_db import (
+from backend.permissions import has_permission, get_user_permissions, ROLES
+from backend.admin_db import (
     update_user_role, toggle_user_active, get_user_stats,
     get_team_members, get_admin_dashboard_stats, get_user_activity_log
 )
-from rules_engine import RULE_TEMPLATES
-from rules_db import (
+from backend.rules_engine import RULE_TEMPLATES
+from backend.rules_db import (
     create_rule, get_user_rules, get_rule, update_rule, delete_rule,
     toggle_rule, get_rule_statistics
 )
