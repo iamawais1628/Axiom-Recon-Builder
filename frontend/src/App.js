@@ -71,7 +71,7 @@ function App() {
         alignItems: 'center',
         backgroundColor: '#f5f5f5'
       }}>
-        <h2 style={{ margin: 0 }}>🤖 ReconAI</h2>
+        <h2 style={{ margin: 0 }}>🤖 Axiom Recon Builder</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <span>Welcome, <strong>{user.name || user.email}</strong></span>
           <button 
