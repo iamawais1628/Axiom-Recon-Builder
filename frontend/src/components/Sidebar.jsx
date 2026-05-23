@@ -2,34 +2,29 @@ import React, { useState } from 'react';
 import '../styles/Sidebar.css';
 
 export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', badge: null },
-    { id: 'reconciliation', label: 'Reconciliation', icon: '⚙️', badge: null },
-    { id: 'history', label: 'History', icon: '📁', badge: null },
-    { id: 'rules', label: 'Rules', icon: '⚡', badge: null },
+    { id: 'reconciliation', label: 'Reconciliation', icon: '🔄', badge: null },
+    { id: 'history', label: 'History', icon: '📜', badge: null },
+    { id: 'rules', label: 'Rules', icon: '🎯', badge: null },
     { id: 'settings', label: 'Settings', icon: '⚙️', badge: null },
   ];
 
   return (
     <div className="sidebar-container">
       {/* Sidebar */}
-      <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
+      <aside 
+        className={`sidebar ${isHovered ? 'expanded' : 'collapsed'}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Brand */}
         <div className="sidebar-brand">
           <div className="brand-logo">📊</div>
-          {isOpen && <div className="brand-text">Axiom Recon Builder</div>}
+          {isHovered && <div className="brand-text">Axiom Recon Builder</div>}
         </div>
-
-        {/* Toggle Button */}
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsOpen(!isOpen)}
-          title={isOpen ? 'Collapse' : 'Expand'}
-        >
-          {isOpen ? '◀' : '▶'}
-        </button>
 
         {/* Navigation Menu */}
         <nav className="sidebar-nav">
@@ -38,10 +33,10 @@ export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
               key={item.id}
               className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
               onClick={() => onNavigate(item.id)}
-              title={!isOpen ? item.label : ''}
+              title={!isHovered ? item.label : ''}
             >
               <span className="nav-icon">{item.icon}</span>
-              {isOpen && (
+              {isHovered && (
                 <>
                   <span className="nav-label">{item.label}</span>
                   {item.badge && <span className="nav-badge">{item.badge}</span>}
@@ -65,7 +60,7 @@ export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
                   .toUpperCase()
               : user?.email?.charAt(0).toUpperCase()}
           </div>
-          {isOpen && (
+          {isHovered && (
             <div className="user-info">
               <div className="user-name">{user?.name || user?.email}</div>
               <div className="user-role">User</div>
@@ -76,12 +71,9 @@ export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
         {/* Logout Button */}
         <button className="btn-sidebar-logout" onClick={onLogout} title="Logout">
           <span className="logout-icon">🚪</span>
-          {isOpen && <span>Logout</span>}
+          {isHovered && <span>Logout</span>}
         </button>
       </aside>
-
-      {/* Mobile Overlay */}
-      {isOpen && <div className="sidebar-overlay" onClick={() => setIsOpen(false)} />}
     </div>
   );
 }
