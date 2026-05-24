@@ -1047,19 +1047,19 @@ def get_dashboard_metrics():
         cur = conn.cursor()
         
         # Query using ACTUAL column names that exist in the table
-        cur.execute('''
-            SELECT 
-                id,
-                name,
-                matched_count,
-                erp_count,
-                match_rate,
-                average_confidence,
-                created_at
-            FROM reconciliation_sessions
-            WHERE user_id = %s
-            ORDER BY created_at DESC
-        ''', (user_id,))
+       cur.execute('''
+    SELECT 
+        id,
+        name,
+        matched_count,
+        erp_count,
+        match_rate,
+        average_confidence,
+        created_at
+    FROM reconciliation_sessions
+    ORDER BY created_at DESC
+    LIMIT 50
+''')
         
         sessions = cur.fetchall()
         conn.close()
