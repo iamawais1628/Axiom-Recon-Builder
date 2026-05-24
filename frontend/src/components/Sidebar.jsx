@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/Sidebar.css';
 
-export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
+export default function Sidebar({ user, currentPage, onNavigate }) {
   const [isHovered, setIsHovered] = useState(false);
 
   const menuItems = [
@@ -39,34 +39,6 @@ export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
             </button>
           ))}
         </nav>
-
-        {/* Divider */}
-        <div className="sidebar-divider" />
-
-        {/* User Section */}
-        <div className="sidebar-user">
-          <div className="user-avatar">
-            {user?.name
-              ? user.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase()
-              : user?.email?.charAt(0).toUpperCase()}
-          </div>
-          {isHovered && (
-            <div className="user-info">
-              <div className="user-name">{user?.name || user?.email}</div>
-              <div className="user-role">User</div>
-            </div>
-          )}
-        </div>
-
-        {/* Logout Button */}
-        <button className="btn-sidebar-logout" onClick={onLogout} title="Logout">
-          <span className="logout-icon">🚪</span>
-          {isHovered && <span>Logout</span>}
-        </button>
       </aside>
     </div>
   );
