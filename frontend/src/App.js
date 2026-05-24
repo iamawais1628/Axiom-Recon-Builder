@@ -1,3 +1,4 @@
+import Rules from './pages/Rules.jsx';
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -129,12 +130,9 @@ function App() {
             <Settings token={token} user={user} />
           )}
           
-          {currentPage === 'history' && (
-            <div className="page-placeholder">
-              <h2>📜 Reconciliation History</h2>
-              <p>View all past reconciliations here...</p>
-            </div>
-          )}
+         {currentPage === 'rules' && (
+         <Rules token={token} user={user} />
+         )}
           
           {currentPage === 'rules' && (
             <div className="page-placeholder">
