@@ -30,7 +30,7 @@ from backend.analytics import (
 from backend.permissions import has_permission, get_user_permissions, ROLES
 from backend.admin_db import (
     update_user_role, toggle_user_active, get_user_stats,
-    get_team_members, get_admin_dashboard_stats, get_user_activity_log
+    get_team_members, get_admin__stats, get_user_activity_log
 )
 from backend.rules_engine import RULE_TEMPLATES
 from backend.rules_db import (
@@ -366,7 +366,7 @@ def index():
                 'GET /api/user/stats': 'Current user statistics (auth required)'
             },
             'Admin': {
-                'GET /api/admin/dashboard': 'Admin dashboard stats (admin only)',
+                'GET /api/admin/': 'Admin dashboard stats (admin only)',
                 'GET /api/admin/users': 'List all users (admin only)',
                 'GET /api/admin/users/<id>': 'Get user details (admin only)',
                 'PUT /api/admin/users/<id>/role': 'Update user role (admin only)',
@@ -1047,7 +1047,7 @@ def get_dashboard_metrics():
         cur = conn.cursor()
         
         # Query using ACTUAL column names that exist in the table
-       cur.execute('''
+        cur.execute('''
     SELECT 
         id,
         name,
