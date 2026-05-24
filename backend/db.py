@@ -233,28 +233,26 @@ def get_match_stats():
         print(f"❌ Error getting stats: {e}")
         return {}
 
-def save_reconciliation_session(name, bank_count, erp_count, matched_count, match_rate, avg_confidence):
-    """Save a reconciliation session"""
+def save_reconciliation_session(session_name, total_bank, total_erp, matched, match_rate, avg_confidence, user_id):
+    """Save reconciliation session to database"""
     try:
         conn = get_db_connection()
-        if not conn:
-            return None
-        
         cur = conn.cursor()
+        
         cur.execute('''
             INSERT INTO reconciliation_sessions 
-            (name, bank_count, erp_count, matched_count, match_rate, average_confidence)
+            (user_id, session_name, total_matched, total_unmatched, match_rate, avg_confidence)
             VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
-        ''', (name, bank_count, erp_count, matched_count, match_rate, avg_confidence))
+        ''', (user_id, session_name, matched, total_erp - matched, match_rate, avg_confidence))
         
         session_id = cur.fetchone()[0]
         conn.commit()
         conn.close()
+        
         return session_id
-    
     except Exception as e:
-        print(f"❌ Error saving session: {e}")
+        print(f"Error saving session: {e}")
         return None
 
 def get_all_sessions():
