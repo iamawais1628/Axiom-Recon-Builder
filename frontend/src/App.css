@@ -94,6 +94,10 @@ body {
   white-space: nowrap;
 }
 
+.header-spacer {
+  flex: 1;
+}
+
 /* ===== MAIN CONTENT WRAPPER ===== */
 .app-main {
   flex: 1;
