@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API_URL from '../config.js';
 import '../styles/Settings.css';
 
@@ -22,11 +22,39 @@ export default function Settings({ user, token }) {
 
   // Preferences
   const [preferences, setPreferences] = useState({
-    theme: 'light',
+    theme: localStorage.getItem('app-theme') || 'light',
     emailNotifications: true,
     matchAlerts: true,
     weeklyReport: false,
   });
+
+  // Apply theme on component mount
+  useEffect(() => {
+    applyTheme(preferences.theme);
+  }, []);
+
+  const applyTheme = (theme) => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.style.setProperty('--bg-primary', '#111827');
+      root.style.setProperty('--bg-secondary', '#1F2937');
+      root.style.setProperty('--text-primary', '#F9FAFB');
+      root.style.setProperty('--text-secondary', '#D1D5DB');
+      root.style.setProperty('--border-color', '#374151');
+      document.body.style.backgroundColor = '#111827';
+      document.body.style.color = '#F9FAFB';
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      root.style.setProperty('--bg-primary', '#F9FAFB');
+      root.style.setProperty('--bg-secondary', '#FFFFFF');
+      root.style.setProperty('--text-primary', '#1F2937');
+      root.style.setProperty('--text-secondary', '#6B7280');
+      root.style.setProperty('--border-color', '#E5E7EB');
+      document.body.style.backgroundColor = '#F9FAFB';
+      document.body.style.color = '#1F2937';
+      document.documentElement.removeAttribute('data-theme');
+    }
+  };
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -40,10 +68,18 @@ export default function Settings({ user, token }) {
 
   const handlePreferenceChange = (e) => {
     const { name, type, checked, value } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setPreferences(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
+
+    // Apply theme immediately if it's the theme select
+    if (name === 'theme') {
+      localStorage.setItem('app-theme', value);
+      applyTheme(value);
+    }
   };
 
   const handleSaveProfile = async (e) => {
@@ -299,7 +335,7 @@ export default function Settings({ user, token }) {
 
           <form onSubmit={handleSavePreferences} className="settings-form">
             <div className="preferences-group">
-              <h3>Theme & Display</h3>
+              <h3>🎨 Theme & Display</h3>
               
               <div className="form-group">
                 <label htmlFor="theme">Theme</label>
@@ -310,15 +346,15 @@ export default function Settings({ user, token }) {
                   onChange={handlePreferenceChange}
                   className="form-input"
                 >
-                  <option value="light">☀️ Light</option>
-                  <option value="dark">🌙 Dark</option>
-                  <option value="auto">🔄 Auto (System)</option>
+                  <option value="light">☀️ Light Mode</option>
+                  <option value="dark">🌙 Dark Mode</option>
                 </select>
+                <small>Theme changes apply immediately</small>
               </div>
             </div>
 
             <div className="preferences-group">
-              <h3>Notifications</h3>
+              <h3>🔔 Notifications</h3>
               
               <div className="form-group checkbox">
                 <input
