@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 import ReconciliationTool from './pages/ReconciliationTool';
 import Settings from './pages/Settings';
 import Sidebar from './components/Sidebar';
@@ -116,19 +117,16 @@ function App() {
 
         {/* Content Area - Full width, not affected by sidebar */}
         <div className="app-content">
+          {currentPage === 'dashboard' && (
+            <Dashboard token={token} user={user} />
+          )}
+
           {currentPage === 'reconciliation' && (
             <ReconciliationTool token={token} user={user} />
           )}
           
           {currentPage === 'settings' && (
             <Settings token={token} user={user} />
-          )}
-          
-          {currentPage === 'dashboard' && (
-            <div className="page-placeholder">
-              <h2>📊 Dashboard</h2>
-              <p>Dashboard content coming soon...</p>
-            </div>
           )}
           
           {currentPage === 'history' && (
