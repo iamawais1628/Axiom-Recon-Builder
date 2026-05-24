@@ -20,12 +20,6 @@ export default function Sidebar({ user, onLogout, currentPage, onNavigate }) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Brand */}
-        <div className="sidebar-brand">
-          <div className="brand-logo">📊</div>
-          {isHovered && <div className="brand-text">Axiom Recon Builder</div>}
-        </div>
-
         {/* Navigation Menu */}
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
