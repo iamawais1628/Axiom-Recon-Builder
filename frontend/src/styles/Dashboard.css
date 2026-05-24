@@ -1,6 +1,8 @@
 .dashboard-container {
   max-width: 1400px;
   margin: 0 auto;
+  margin-left: 100px;  /* Account for fixed sidebar (80px) + padding */
+  padding: 32px;
 }
 
 /* ===== HEADER ===== */
