@@ -1044,6 +1044,100 @@ def not_found(error):
 def server_error(error):
     return jsonify({'error': 'Server error'}), 500
 
+
+# ADD THIS TO YOUR backend/app.py
+
+# Add this import at the top
+from flask import jsonify
+from datetime import datetime, timedelta
+
+# Add this route to app.py (after your existing routes)
+
+@app.route('/api/dashboard/metrics', methods=['GET'])
+def get_dashboard_metrics():
+    """Get dashboard metrics for authenticated user"""
+    try:
+        # Get auth token
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Missing or invalid authorization'}), 401
+        
+        token = auth_header[7:]
+        user_id = verify_jwt_token(token)
+        
+        if not user_id:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        # Query reconciliation sessions
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Get all sessions for user
+        cur.execute('''
+            SELECT 
+                id,
+                session_name,
+                total_matched,
+                total_unmatched,
+                match_rate,
+                avg_confidence,
+                created_at
+            FROM reconciliation_sessions
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+        ''', (user_id,))
+        
+        sessions = cur.fetchall()
+        conn.close()
+        
+        # Calculate metrics
+        total_sessions = len(sessions)
+        total_matched = sum(s[2] for s in sessions) if sessions else 0
+        total_unmatched = sum(s[3] for s in sessions) if sessions else 0
+        
+        # Overall match rate
+        total_items = total_matched + total_unmatched
+        overall_match_rate = (total_matched / total_items * 100) if total_items > 0 else 0
+        
+        # Average confidence
+        avg_confidence = sum(s[5] for s in sessions) / len(sessions) if sessions else 0
+        
+        # Recent sessions (last 10)
+        recent_sessions = []
+        for session in sessions[:10]:
+            recent_sessions.append({
+                'id': session[0],
+                'session_name': session[1],
+                'total_matched': session[2],
+                'total_unmatched': session[3],
+                'match_rate': session[4],
+                'avg_confidence': session[5],
+                'created_at': session[6].isoformat() if session[6] else None
+            })
+        
+        return jsonify({
+            'totalSessions': total_sessions,
+            'totalMatches': total_matched,
+            'totalUnmatched': total_unmatched,
+            'overallMatchRate': overall_match_rate,
+            'avgConfidence': avg_confidence,
+            'recentSessions': recent_sessions
+        }), 200
+        
+    except Exception as e:
+        print(f"Error fetching dashboard metrics: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+# Also add this helper function if you don't have it:
+def verify_jwt_token(token):
+    """Verify JWT token and return user_id"""
+    try:
+        import jwt
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        return payload.get('user_id')
+    except:
+        return None
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print(f"\n🚀 Starting Axiom Recon BuilderAPI v1.4 on port {port}")
