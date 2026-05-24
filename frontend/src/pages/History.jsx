@@ -1,304 +1,340 @@
+import React, { useState, useEffect, useCallback } from 'react';
 import API_URL from '../config.js';
-import React, { useState, useEffect } from 'react';
 import '../styles/History.css';
 
-export default function History() {
+export default function History({ token, user }) {
   const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all'); // all, high, low
   const [selectedSession, setSelectedSession] = useState(null);
-  const [sessionMatches, setSessionMatches] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [sessionDetails, setSessionDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // Load all sessions on mount
-  useEffect(() => {
-    loadSessions();
-    loadStats();
-  }, []);
-
-  const loadSessions = async () => {
-    setLoading(true);
+  // Fetch all sessions
+  const fetchSessions = useCallback(async () => {
     try {
-      // For now, use demo data
-      setSessions([
-        {
-          id: 1,
-          name: 'January 2024 Reconciliation',
-          bank_count: 50,
-          erp_count: 50,
-          matched_count: 48,
-          match_rate: 96,
-          average_confidence: 92.5,
-          created_at: '2024-01-31T16:30:00'
-        },
-        {
-          id: 2,
-          name: 'December 2023 Month-End',
-          bank_count: 45,
-          erp_count: 45,
-          matched_count: 42,
-          match_rate: 93.3,
-          average_confidence: 89.2,
-          created_at: '2023-12-31T18:00:00'
-        }
-      ]);
-    } catch (err) {
-      console.error('Error loading sessions:', err);
-    }
-    setLoading(false);
-  };
-
-  const loadStats = async () => {
-    try {
-      // For now, use demo data
-      setStats({
-        total_sessions: 12,
-        total_transactions: 850,
-        total_matches: 810,
-        confirmed_matches: 800,
-        average_match_rate: 95.3,
-        average_confidence: 90.8,
-        best_session: {
-          name: 'January 2024 Reconciliation',
-          match_rate: 96
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/sessions?limit=100`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      const data = await response.json();
+      setSessions(data.sessions || []);
+      setError('');
     } catch (err) {
-      console.error('Error loading stats:', err);
+      setError(err.message);
+      console.error('Error fetching sessions:', err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [token]);
 
-  const handleSessionClick = (session) => {
-    setSelectedSession(session);
-    loadSessionMatches(session.id);
-  };
-
-  const loadSessionMatches = async (sessionId) => {
+  // Fetch session details
+  const fetchSessionDetails = useCallback(async (sessionId) => {
     try {
-      // For now, use demo data
-      setSessionMatches([
-        {
-          id: 1,
-          bank_amount: 1000,
-          bank_desc: 'ABC Corp Payment',
-          erp_amount: 1000,
-          erp_desc: 'Invoice ABC',
-          confidence: 95.2,
-          status: 'confirmed'
+      setDetailsLoading(true);
+      const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]);
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch session details');
+      const data = await response.json();
+      setSessionDetails(data.session);
     } catch (err) {
-      console.error('Error loading matches:', err);
+      setError(err.message);
+      console.error('Error fetching session details:', err);
+    } finally {
+      setDetailsLoading(false);
     }
+  }, [token]);
+
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
+
+  // Filter sessions based on search and filter type
+  const filteredSessions = sessions.filter(session => {
+    const matchesSearch = session.session_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (filterType === 'high') {
+      return matchesSearch && session.match_rate >= 75;
+    } else if (filterType === 'low') {
+      return matchesSearch && session.match_rate < 75;
+    }
+    return matchesSearch;
+  });
+
+  const handleSelectSession = (session) => {
+    setSelectedSession(session.id);
+    fetchSessionDetails(session.id);
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery) {
-      loadSessions();
-      return;
-    }
-    // Implement search if needed
+  const handleCloseDetails = () => {
+    setSelectedSession(null);
+    setSessionDetails(null);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  if (loading) {
+    return (
+      <div className="history-loading">
+        <div className="loading-spinner" />
+        <p>Loading history...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="history-container">
-      <header className="history-header">
-        <h1>📊 Reconciliation History</h1>
-        <p>View past reconciliations and analytics</p>
-      </header>
-
-      <main className="history-main">
-        {/* Overall Statistics */}
-        {stats && (
-          <section className="stats-overview">
-            <h2>Overall Statistics</h2>
-            <div className="stats-grid">
-              <div className="stat-box">
-                <p className="stat-label">Total Sessions</p>
-                <p className="stat-number">{stats.total_sessions}</p>
-              </div>
-              <div className="stat-box">
-                <p className="stat-label">Total Transactions</p>
-                <p className="stat-number">{stats.total_transactions}</p>
-              </div>
-              <div className="stat-box">
-                <p className="stat-label">Total Matches</p>
-                <p className="stat-number">{stats.total_matches}</p>
-              </div>
-              <div className="stat-box">
-                <p className="stat-label">Avg Match Rate</p>
-                <p className="stat-number">{stats.average_match_rate}%</p>
-              </div>
-              <div className="stat-box">
-                <p className="stat-label">Avg Confidence</p>
-                <p className="stat-number">{stats.average_confidence}%</p>
-              </div>
-              <div className="stat-box best">
-                <p className="stat-label">Best Session</p>
-                <p className="stat-number">{stats.best_session?.match_rate}%</p>
-                <p className="stat-sublabel">{stats.best_session?.name}</p>
-              </div>
+      {/* Header */}
+      <div className="history-header">
+        <div>
+          <h2>📜 Reconciliation History</h2>
+          <p>View all your past reconciliation sessions</p>
+        </div>
+        <div className="header-stats">
+          <div className="stat">
+            <div className="stat-label">Total Sessions</div>
+            <div className="stat-value">{sessions.length}</div>
+          </div>
+          <div className="stat">
+            <div className="stat-label">Avg Match Rate</div>
+            <div className="stat-value">
+              {sessions.length > 0 
+                ? (sessions.reduce((sum, s) => sum + (s.match_rate || 0), 0) / sessions.length).toFixed(1)
+                : 0}%
             </div>
-          </section>
-        )}
+          </div>
+        </div>
+      </div>
 
-        {/* Search Bar */}
-        <section className="search-section">
+      {/* Error Banner */}
+      {error && (
+        <div className="error-banner">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Search and Filter */}
+      <div className="history-controls">
+        <div className="search-box">
           <input
             type="text"
-            placeholder="Search sessions by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search sessions by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <button onClick={handleSearch} className="search-btn">
-            🔍 Search
+        </div>
+
+        <div className="filter-tabs">
+          <button
+            className={`filter-tab ${filterType === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterType('all')}
+          >
+            All ({sessions.length})
           </button>
-        </section>
+          <button
+            className={`filter-tab ${filterType === 'high' ? 'active' : ''}`}
+            onClick={() => setFilterType('high')}
+          >
+            High Match (75%+)
+          </button>
+          <button
+            className={`filter-tab ${filterType === 'low' ? 'active' : ''}`}
+            onClick={() => setFilterType('low')}
+          >
+            Low Match (&lt;75%)
+          </button>
+        </div>
+      </div>
 
-        <div className="history-content">
-          {/* Sessions List */}
-          <section className="sessions-list">
-            <h2>Reconciliation Sessions</h2>
-            
-            {loading ? (
-              <p className="loading">Loading sessions...</p>
-            ) : sessions.length > 0 ? (
-              <div className="sessions-container">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className={`session-card ${selectedSession?.id === session.id ? 'active' : ''}`}
-                    onClick={() => handleSessionClick(session)}
-                  >
-                    <div className="session-header">
-                      <h3>{session.name}</h3>
-                      <span className="session-date">{formatDate(session.created_at)}</span>
-                    </div>
-                    
-                    <div className="session-stats">
-                      <div className="stat">
-                        <span className="label">Bank:</span>
-                        <span className="value">{session.bank_count}</span>
-                      </div>
-                      <div className="stat">
-                        <span className="label">ERP:</span>
-                        <span className="value">{session.erp_count}</span>
-                      </div>
-                      <div className="stat">
-                        <span className="label">Matched:</span>
-                        <span className="value">{session.matched_count}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="session-metrics">
-                      <div className="metric">
-                        <span className="metric-label">Match Rate</span>
-                        <span className={`metric-value ${session.match_rate >= 95 ? 'high' : 'medium'}`}>
-                          {session.match_rate}%
-                        </span>
-                      </div>
-                      <div className="metric">
-                        <span className="metric-label">Avg Confidence</span>
-                        <span className={`metric-value ${session.average_confidence >= 90 ? 'high' : 'medium'}`}>
-                          {session.average_confidence}%
-                        </span>
-                      </div>
-                    </div>
+      {/* Sessions List */}
+      <div className="history-content">
+        {/* Sessions Table */}
+        <div className="sessions-section">
+          {filteredSessions.length > 0 ? (
+            <div className="sessions-table">
+              <div className="table-header">
+                <div className="col col-date">Date</div>
+                <div className="col col-name">Session Name</div>
+                <div className="col col-stats">Matched / Unmatched</div>
+                <div className="col col-rate">Match Rate</div>
+                <div className="col col-confidence">Confidence</div>
+                <div className="col col-action">Action</div>
+              </div>
+
+              {filteredSessions.map((session) => (
+                <div 
+                  key={session.id} 
+                  className={`table-row ${selectedSession === session.id ? 'selected' : ''}`}
+                  onClick={() => handleSelectSession(session)}
+                >
+                  <div className="col col-date">
+                    {new Date(session.created_at).toLocaleDateString()}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-sessions">No reconciliation sessions found</p>
-            )}
-          </section>
-
-          {/* Session Details */}
-          {selectedSession && (
-            <section className="session-details">
-              <h2>Session Details: {selectedSession.name}</h2>
-              
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Date</span>
-                  <span className="detail-value">{formatDate(selectedSession.created_at)}</span>
+                  <div className="col col-name">
+                    <span className="session-name">{session.session_name || 'Unnamed'}</span>
+                  </div>
+                  <div className="col col-stats">
+                    <span className="badge success">{session.total_matched}</span>
+                    <span className="badge">{session.total_unmatched}</span>
+                  </div>
+                  <div className="col col-rate">
+                    <div className="rate-bar">
+                      <div 
+                        className={`rate-fill ${session.match_rate >= 75 ? 'high' : 'low'}`}
+                        style={{ width: `${session.match_rate}%` }}
+                      />
+                    </div>
+                    <span className="rate-text">{session.match_rate?.toFixed(1)}%</span>
+                  </div>
+                  <div className="col col-confidence">
+                    {session.avg_confidence?.toFixed(1)}%
+                  </div>
+                  <div className="col col-action">
+                    <button 
+                      className="btn-view"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectSession(session);
+                      }}
+                    >
+                      👁️ View
+                    </button>
+                  </div>
                 </div>
-                <div className="detail-item">
-                  <span className="detail-label">Bank Transactions</span>
-                  <span className="detail-value">{selectedSession.bank_count}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">ERP Transactions</span>
-                  <span className="detail-value">{selectedSession.erp_count}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Matched</span>
-                  <span className="detail-value">{selectedSession.matched_count}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Unmatched</span>
-                  <span className="detail-value">
-                    {selectedSession.bank_count + selectedSession.erp_count - (selectedSession.matched_count * 2)}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Match Rate</span>
-                  <span className="detail-value">{selectedSession.match_rate}%</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Avg Confidence</span>
-                  <span className="detail-value">{selectedSession.average_confidence}%</span>
-                </div>
-              </div>
-
-              {/* Matches Table */}
-              {sessionMatches.length > 0 && (
-                <div className="matches-table-container">
-                  <h3>Matches ({sessionMatches.length})</h3>
-                  <table className="matches-table">
-                    <thead>
-                      <tr>
-                        <th>Bank Amount</th>
-                        <th>Bank Description</th>
-                        <th>ERP Amount</th>
-                        <th>ERP Description</th>
-                        <th>Confidence</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sessionMatches.slice(0, 10).map((match) => (
-                        <tr key={match.id}>
-                          <td>${match.bank_amount.toFixed(2)}</td>
-                          <td>{match.bank_desc}</td>
-                          <td>${match.erp_amount.toFixed(2)}</td>
-                          <td>{match.erp_desc}</td>
-                          <td>
-                            <span className={`confidence-badge ${match.confidence >= 90 ? 'high' : 'medium'}`}>
-                              {match.confidence}%
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`status-badge ${match.status}`}>
-                              {match.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>📋 No sessions found</p>
+              <p className="subtitle">
+                {searchTerm ? 'Try a different search term' : 'Start a reconciliation to see history here'}
+              </p>
+            </div>
           )}
         </div>
-      </main>
+
+        {/* Session Details Panel */}
+        {selectedSession && (
+          <div className="details-panel">
+            <div className="details-header">
+              <h3>📊 Session Details</h3>
+              <button className="btn-close" onClick={handleCloseDetails}>✕</button>
+            </div>
+
+            {detailsLoading ? (
+              <div className="details-loading">
+                <div className="loading-spinner" />
+                <p>Loading details...</p>
+              </div>
+            ) : sessionDetails ? (
+              <div className="details-content">
+                {/* Session Info */}
+                <div className="detail-section">
+                  <h4>Session Information</h4>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="label">Session Name</span>
+                      <span className="value">{sessionDetails.session_name || 'Unnamed'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Created</span>
+                      <span className="value">{new Date(sessionDetails.created_at).toLocaleString()}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Total Matched</span>
+                      <span className="value">{sessionDetails.total_matched}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Total Unmatched</span>
+                      <span className="value">{sessionDetails.total_unmatched}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Metrics */}
+                <div className="detail-section">
+                  <h4>Performance Metrics</h4>
+                  <div className="metrics-display">
+                    <div className="metric">
+                      <div className="metric-label">Match Rate</div>
+                      <div className="metric-bar">
+                        <div 
+                          className={`metric-fill ${sessionDetails.match_rate >= 75 ? 'high' : 'low'}`}
+                          style={{ width: `${sessionDetails.match_rate}%` }}
+                        />
+                      </div>
+                      <div className="metric-value">{sessionDetails.match_rate?.toFixed(1)}%</div>
+                    </div>
+                    <div className="metric">
+                      <div className="metric-label">Avg Confidence</div>
+                      <div className="metric-bar">
+                        <div 
+                          className="metric-fill"
+                          style={{ width: `${sessionDetails.avg_confidence}%` }}
+                        />
+                      </div>
+                      <div className="metric-value">{sessionDetails.avg_confidence?.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Info */}
+                <div className="detail-section">
+                  <h4>Match Ratio</h4>
+                  <div className="ratio-display">
+                    <div className="ratio-item">
+                      <span className="ratio-label">Matched</span>
+                      <span className="ratio-value">{sessionDetails.total_matched}</span>
+                    </div>
+                    <span className="ratio-separator">:</span>
+                    <div className="ratio-item">
+                      <span className="ratio-label">Unmatched</span>
+                      <span className="ratio-value">{sessionDetails.total_unmatched}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="detail-actions">
+                  <button className="btn-export" title="Export this session">
+                    📥 Export Results
+                  </button>
+                  <button className="btn-rerun" title="Run matching again">
+                    🔄 Re-run Matching
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="error-state">
+                <p>Failed to load session details</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Stats Summary */}
+      <div className="history-summary">
+        <div className="summary-card">
+          <h4>📈 Performance</h4>
+          <p>Your average match rate is <strong>{sessions.length > 0 ? (sessions.reduce((sum, s) => sum + (s.match_rate || 0), 0) / sessions.length).toFixed(1) : 0}%</strong></p>
+        </div>
+        <div className="summary-card">
+          <h4>💡 Insight</h4>
+          <p>You have <strong>{sessions.length}</strong> reconciliation sessions in your history</p>
+        </div>
+      </div>
     </div>
   );
 }
