@@ -28,10 +28,10 @@ export default function Settings({ user, token }) {
     weeklyReport: false,
   });
 
-  // Apply theme on component mount
+  // Apply theme on component mount and when theme preference changes
   useEffect(() => {
     applyTheme(preferences.theme);
-  }, []);
+  }, [preferences.theme]);
 
   const applyTheme = (theme) => {
     const root = document.documentElement;
