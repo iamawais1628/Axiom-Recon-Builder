@@ -30,7 +30,7 @@ from backend.analytics import (
 from backend.permissions import has_permission, get_user_permissions, ROLES
 from backend.admin_db import (
     update_user_role, toggle_user_active, get_user_stats,
-    get_team_members, get_admin__stats, get_user_activity_log
+    get_team_members, get_admin_dashboard_stats, get_user_activity_log
 )
 from backend.rules_engine import RULE_TEMPLATES
 from backend.rules_db import (
