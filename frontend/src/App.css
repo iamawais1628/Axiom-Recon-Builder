@@ -66,6 +66,7 @@ body {
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+  height: 72px;
 }
 
 .header-brand {
@@ -105,8 +106,8 @@ body {
 .sidebar-container {
   position: fixed;
   left: 0;
-  top: 70px;
-  height: calc(100vh - 70px);
+  top: 72px;
+  height: calc(100vh - 72px);
   z-index: 100;
   pointer-events: none;
 }
