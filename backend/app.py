@@ -311,7 +311,7 @@ def get_permissions():
 def index():
     """API documentation"""
     return jsonify({
-        'name': 'Axiom Recon BuilderAPI',
+        'name': 'Axiom Recon Builder API',
         'version': '1.4',
         'features': [
             'CSV paste & match',
@@ -366,7 +366,7 @@ def index():
                 'GET /api/user/stats': 'Current user statistics (auth required)'
             },
             'Admin': {
-                'GET /api/admin/': 'Admin dashboard stats (admin only)',
+                'GET /api/admin/dashboard': 'Admin dashboard stats (admin only)',
                 'GET /api/admin/users': 'List all users (admin only)',
                 'GET /api/admin/users/<id>': 'Get user details (admin only)',
                 'PUT /api/admin/users/<id>/role': 'Update user role (admin only)',
@@ -549,8 +549,8 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
         print(f"✓ Saved {matched} matches")
         
         session_id = save_reconciliation_session(
-    session_name, total_bank, total_erp, matched, match_rate, avg_confidence, request.user['id']
-     )  
+            session_name, total_bank, total_erp, matched, match_rate, avg_confidence, request.user['id']
+        )
         
         print(f"✓ Created session: {session_id}\n")
         
@@ -1048,18 +1048,18 @@ def get_dashboard_metrics():
         
         # Query using ACTUAL column names that exist in the table
         cur.execute('''
-    SELECT 
-        id,
-        name,
-        matched_count,
-        erp_count,
-        match_rate,
-        average_confidence,
-        created_at
-    FROM reconciliation_sessions
-    ORDER BY created_at DESC
-    LIMIT 50
-''')
+            SELECT 
+                id,
+                name,
+                matched_count,
+                erp_count,
+                match_rate,
+                average_confidence,
+                created_at
+            FROM reconciliation_sessions
+            ORDER BY created_at DESC
+            LIMIT 50
+        ''')
         
         sessions = cur.fetchall()
         conn.close()
@@ -1075,38 +1075,38 @@ def get_dashboard_metrics():
             }), 200
         
         # Calculate metrics
-total_sessions = len(sessions)
-total_matched = sum(s[2] for s in sessions) if sessions else 0
-total_unmatched = sum(s[3] for s in sessions) if sessions else 0
-
-# Overall match rate
-total_items = total_matched + total_unmatched
-overall_match_rate = (total_matched / total_items * 100) if total_items > 0 else 0
-
-# Average confidence - Convert to float
-avg_confidence = sum(float(s[5]) for s in sessions) / len(sessions) if sessions else 0
-
-# Recent sessions (last 10)
-recent_sessions = []
-for session in sessions[:10]:
-    recent_sessions.append({
-        'id': session[0],
-        'session_name': session[1],
-        'total_matched': int(session[2]),
-        'total_unmatched': int(session[3]),
-        'match_rate': float(session[4]),  # ← Convert to float
-        'avg_confidence': float(session[5]),  # ← Convert to float
-        'created_at': session[6].isoformat() if session[6] else None
-    })
-
-return jsonify({
-    'totalSessions': total_sessions,
-    'totalMatches': total_matched,
-    'totalUnmatched': total_unmatched,
-    'overallMatchRate': round(overall_match_rate, 2),  # ← Round for cleaner output
-    'avgConfidence': round(avg_confidence, 2),  # ← Convert and round
-    'recentSessions': recent_sessions
-}), 200
+        total_sessions = len(sessions)
+        total_matched = sum(s[2] for s in sessions) if sessions else 0
+        total_unmatched = sum(s[3] for s in sessions) if sessions else 0
+        
+        # Overall match rate
+        total_items = total_matched + total_unmatched
+        overall_match_rate = (total_matched / total_items * 100) if total_items > 0 else 0
+        
+        # Average confidence - Convert to float
+        avg_confidence = sum(float(s[5]) for s in sessions) / len(sessions) if sessions else 0
+        
+        # Recent sessions (last 10)
+        recent_sessions = []
+        for session in sessions[:10]:
+            recent_sessions.append({
+                'id': session[0],
+                'session_name': session[1],
+                'total_matched': int(session[2]),
+                'total_unmatched': int(session[3]),
+                'match_rate': float(session[4]),
+                'avg_confidence': float(session[5]),
+                'created_at': session[6].isoformat() if session[6] else None
+            })
+        
+        return jsonify({
+            'totalSessions': total_sessions,
+            'totalMatches': total_matched,
+            'totalUnmatched': total_unmatched,
+            'overallMatchRate': round(overall_match_rate, 2),
+            'avgConfidence': round(avg_confidence, 2),
+            'recentSessions': recent_sessions
+        }), 200
         
     except Exception as e:
         print(f"Error fetching dashboard metrics: {str(e)}")
@@ -1124,6 +1124,6 @@ def server_error(error):
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    print(f"\n🚀 Starting Axiom Recon BuilderAPI v1.4 on port {port}")
+    print(f"\n🚀 Starting Axiom Recon Builder API v1.4 on port {port}")
     print(f"   Full-featured reconciliation, analytics, rules & authentication\n")
     app.run(debug=True, port=port)
