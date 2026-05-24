@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import ReconciliationTool from './pages/ReconciliationTool';
 import Settings from './pages/Settings';
 import Sidebar from './components/Sidebar';
+import UserProfile from './components/UserProfile';
 import './App.css';
 
 function App() {
@@ -94,6 +95,14 @@ function App() {
         <div className="header-brand">📊 Axiom Recon Builder</div>
         <div className="header-divider" />
         <h1>{getPageTitle()}</h1>
+        
+        {/* User Profile - Right side */}
+        <div className="header-spacer" />
+        <UserProfile 
+          user={user}
+          onLogout={handleLogout}
+          onNavigateToSettings={() => handleNavigate('settings')}
+        />
       </div>
 
       {/* Main Content Area */}
@@ -101,7 +110,6 @@ function App() {
         {/* Floating Sidebar */}
         <Sidebar 
           user={user} 
-          onLogout={handleLogout}
           currentPage={currentPage}
           onNavigate={handleNavigate}
         />
