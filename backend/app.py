@@ -16,7 +16,8 @@ from backend.csv_parser import parse_csv
 from backend.matching import match_transactions
 from backend.db import (
     init_db, save_transaction, save_match, confirm_match, reject_match,
-    get_all_matches, get_match_stats, save_reconciliation_session, get_all_sessions
+    get_all_matches, get_match_stats, save_reconciliation_session, get_all_sessions,
+    get_db_connection
 )
 from backend.file_handler import (
     init_upload_folder, save_upload_file, read_csv_file, delete_upload_file,
@@ -381,7 +382,6 @@ def index():
 def health():
     """Health check endpoint"""
     try:
-        from db import get_db_connection
         conn = get_db_connection()
         if not conn:
             return jsonify({
@@ -1034,41 +1034,15 @@ def user_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== ERROR HANDLERS =====
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Endpoint not found'}), 404
-
-@app.errorhandler(500)
-def server_error(error):
-    return jsonify({'error': 'Server error'}), 500
-
-
-# ADD THIS TO YOUR backend/app.py
-
-# Add this import at the top
-from flask import jsonify
-from datetime import datetime, timedelta
-
-# Add this route to app.py (after your existing routes)
+# ===== DASHBOARD ENDPOINTS =====
 
 @app.route('/api/dashboard/metrics', methods=['GET'])
+@token_required
 def get_dashboard_metrics():
     """Get dashboard metrics for authenticated user"""
     try:
-        # Get auth token
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Missing or invalid authorization'}), 401
+        user_id = request.user['id']
         
-        token = auth_header[7:]
-        user_id = verify_jwt_token(token)
-        
-        if not user_id:
-            return jsonify({'error': 'Invalid token'}), 401
-        
-        # Query reconciliation sessions
         conn = get_db_connection()
         cur = conn.cursor()
         
@@ -1128,16 +1102,16 @@ def get_dashboard_metrics():
         print(f"Error fetching dashboard metrics: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# ===== ERROR HANDLERS =====
 
-# Also add this helper function if you don't have it:
-def verify_jwt_token(token):
-    """Verify JWT token and return user_id"""
-    try:
-        import jwt
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        return payload.get('user_id')
-    except:
-        return None
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({'error': 'Server error'}), 500
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print(f"\n🚀 Starting Axiom Recon BuilderAPI v1.4 on port {port}")
