@@ -549,8 +549,8 @@ def process_reconciliation(bank_csv, erp_csv, session_name):
         print(f"✓ Saved {matched} matches")
         
         session_id = save_reconciliation_session(
-            session_name, total_bank, total_erp, matched, match_rate, avg_confidence
-        )
+    session_name, total_bank, total_erp, matched, match_rate, avg_confidence, request.user['id']
+     )  
         
         print(f"✓ Created session: {session_id}\n")
         
