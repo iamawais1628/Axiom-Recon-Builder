@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import API_URL from '../config.js';
 import '../styles/Dashboard.css';
 
@@ -14,11 +14,7 @@ export default function Dashboard({ token, user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchDashboardMetrics();
-  }, [token]);
-
-  const fetchDashboardMetrics = async () => {
+  const fetchDashboardMetrics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/api/dashboard/metrics`, {
@@ -41,7 +37,11 @@ export default function Dashboard({ token, user }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchDashboardMetrics();
+  }, [fetchDashboardMetrics]);
 
   if (loading) {
     return (
