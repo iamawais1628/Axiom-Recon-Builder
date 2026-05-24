@@ -48,10 +48,6 @@ export default function UserProfile({ user, onLogout, onNavigateToSettings }) {
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="profile-dropdown">
-          <button className="dropdown-item settings-item" onClick={handleSettingsClick}>
-            <span>⚙️</span> Settings
-          </button>
-          <div className="dropdown-divider" />
           <button className="dropdown-item logout-item" onClick={onLogout}>
             <span>🚪</span> Logout
           </button>
