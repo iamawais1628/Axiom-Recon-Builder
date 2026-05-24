@@ -15,11 +15,6 @@ export default function UserProfile({ user, onLogout, onNavigateToSettings }) {
     return user?.email?.charAt(0).toUpperCase() || 'U';
   };
 
-  const handleSettingsClick = () => {
-    onNavigateToSettings();
-    setIsOpen(false);
-  };
-
   return (
     <div className="user-profile-container">
       <button
