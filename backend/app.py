@@ -1046,15 +1046,15 @@ def get_dashboard_metrics():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Get all sessions for user
+        # Query using ACTUAL column names that exist in the table
         cur.execute('''
             SELECT 
                 id,
-                session_name,
-                total_matched,
-                total_unmatched,
+                name,
+                matched_count,
+                erp_count,
                 match_rate,
-                avg_confidence,
+                average_confidence,
                 created_at
             FROM reconciliation_sessions
             WHERE user_id = %s
@@ -1063,6 +1063,16 @@ def get_dashboard_metrics():
         
         sessions = cur.fetchall()
         conn.close()
+        
+        if not sessions:
+            return jsonify({
+                'totalSessions': 0,
+                'totalMatches': 0,
+                'totalUnmatched': 0,
+                'overallMatchRate': 0,
+                'avgConfidence': 0,
+                'recentSessions': []
+            }), 200
         
         # Calculate metrics
         total_sessions = len(sessions)
