@@ -1,9 +1,10 @@
-import Rules from './pages/Rules.jsx';
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ReconciliationTool from './pages/ReconciliationTool';
 import Settings from './pages/Settings';
+import History from './pages/History.jsx';
+import Rules from './pages/Rules.jsx';
 import Sidebar from './components/Sidebar';
 import UserProfile from './components/UserProfile';
 import './App.css';
@@ -126,19 +127,16 @@ function App() {
             <ReconciliationTool token={token} user={user} />
           )}
           
-          {currentPage === 'settings' && (
-            <Settings token={token} user={user} />
+          {currentPage === 'history' && (
+            <History token={token} user={user} />
           )}
           
-         {currentPage === 'rules' && (
-         <Rules token={token} user={user} />
-         )}
-          
           {currentPage === 'rules' && (
-            <div className="page-placeholder">
-              <h2>🎯 Rules Engine</h2>
-              <p>Manage your matching rules here...</p>
-            </div>
+            <Rules token={token} user={user} />
+          )}
+          
+          {currentPage === 'settings' && (
+            <Settings token={token} user={user} />
           )}
         </div>
       </div>
