@@ -1075,38 +1075,38 @@ def get_dashboard_metrics():
             }), 200
         
         # Calculate metrics
-        total_sessions = len(sessions)
-        total_matched = sum(s[2] for s in sessions) if sessions else 0
-        total_unmatched = sum(s[3] for s in sessions) if sessions else 0
-        
-        # Overall match rate
-        total_items = total_matched + total_unmatched
-        overall_match_rate = (total_matched / total_items * 100) if total_items > 0 else 0
-        
-        # Average confidence
-        avg_confidence = sum(s[5] for s in sessions) / len(sessions) if sessions else 0
-        
-        # Recent sessions (last 10)
-        recent_sessions = []
-        for session in sessions[:10]:
-            recent_sessions.append({
-                'id': session[0],
-                'session_name': session[1],
-                'total_matched': session[2],
-                'total_unmatched': session[3],
-                'match_rate': session[4],
-                'avg_confidence': session[5],
-                'created_at': session[6].isoformat() if session[6] else None
-            })
-        
-        return jsonify({
-            'totalSessions': total_sessions,
-            'totalMatches': total_matched,
-            'totalUnmatched': total_unmatched,
-            'overallMatchRate': overall_match_rate,
-            'avgConfidence': avg_confidence,
-            'recentSessions': recent_sessions
-        }), 200
+total_sessions = len(sessions)
+total_matched = sum(s[2] for s in sessions) if sessions else 0
+total_unmatched = sum(s[3] for s in sessions) if sessions else 0
+
+# Overall match rate
+total_items = total_matched + total_unmatched
+overall_match_rate = (total_matched / total_items * 100) if total_items > 0 else 0
+
+# Average confidence - Convert to float
+avg_confidence = sum(float(s[5]) for s in sessions) / len(sessions) if sessions else 0
+
+# Recent sessions (last 10)
+recent_sessions = []
+for session in sessions[:10]:
+    recent_sessions.append({
+        'id': session[0],
+        'session_name': session[1],
+        'total_matched': int(session[2]),
+        'total_unmatched': int(session[3]),
+        'match_rate': float(session[4]),  # ← Convert to float
+        'avg_confidence': float(session[5]),  # ← Convert to float
+        'created_at': session[6].isoformat() if session[6] else None
+    })
+
+return jsonify({
+    'totalSessions': total_sessions,
+    'totalMatches': total_matched,
+    'totalUnmatched': total_unmatched,
+    'overallMatchRate': round(overall_match_rate, 2),  # ← Round for cleaner output
+    'avgConfidence': round(avg_confidence, 2),  # ← Convert and round
+    'recentSessions': recent_sessions
+}), 200
         
     except Exception as e:
         print(f"Error fetching dashboard metrics: {str(e)}")
