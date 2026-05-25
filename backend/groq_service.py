@@ -1,14 +1,26 @@
 import os
 from groq import Groq
 
-# Initialize Groq client
-client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+# Lazy initialize client - only create when needed
+_client = None
+
+def get_client():
+    """Get or create Groq client (lazy initialization)"""
+    global _client
+    if _client is None:
+        api_key = os.getenv('GROQ_API_KEY')
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable not set")
+        _client = Groq(api_key=api_key)
+    return _client
 
 def analyze_unmatched_transactions(bank_transactions, erp_transactions, limit=5):
     """
     Use Groq to analyze unmatched transactions and suggest potential matches
     """
     try:
+        client = get_client()
+        
         # Prepare data for analysis
         bank_summary = f"Bank transactions ({len(bank_transactions)} total):\n"
         for i, tx in enumerate(bank_transactions[:limit]):
@@ -56,6 +68,8 @@ def suggest_matching_rules(transactions_data, match_history=None):
     Use Groq to suggest matching rules based on transaction patterns
     """
     try:
+        client = get_client()
+        
         # Prepare data summary
         summary = f"""Analyze {len(transactions_data)} transactions and suggest matching rules.
         
@@ -101,6 +115,8 @@ def explain_mismatch(bank_tx, erp_tx):
     Use Groq to explain why two similar transactions don't match
     """
     try:
+        client = get_client()
+        
         prompt = f"""You are a financial reconciliation expert. Explain why these two transactions likely don't match despite being similar:
 
 Bank Transaction:
@@ -146,6 +162,8 @@ def summarize_reconciliation(session_data):
     Use Groq to generate a summary of reconciliation results
     """
     try:
+        client = get_client()
+        
         prompt = f"""Generate a professional reconciliation summary based on these results:
 
 Session: {session_data.get('session_name', 'Unnamed')}
