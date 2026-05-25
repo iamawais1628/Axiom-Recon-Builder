@@ -43,7 +43,7 @@ For each potential match, explain:
 
 Be concise and practical."""
 
-        message = client.messages.create(
+        message = client.chat.completions.create(
             model="mixtral-8x7b-32768",
             max_tokens=1024,
             messages=[
@@ -53,7 +53,7 @@ Be concise and practical."""
         
         return {
             'status': 'success',
-            'analysis': message.content[0].text,
+            'analysis': message.choices[0].message.content,
             'model': 'mixtral-8x7b-32768'
         }
     
@@ -90,7 +90,7 @@ For each rule, provide:
 
 Be specific and actionable."""
 
-        message = client.messages.create(
+        message = client.chat.completions.create(
             model="mixtral-8x7b-32768",
             max_tokens=1024,
             messages=[
@@ -100,7 +100,7 @@ Be specific and actionable."""
         
         return {
             'status': 'success',
-            'suggestions': message.content[0].text,
+            'suggestions': message.choices[0].message.content,
             'model': 'mixtral-8x7b-32768'
         }
     
@@ -137,7 +137,7 @@ Analyze the differences and explain:
 
 Be concise and practical."""
 
-        message = client.messages.create(
+        message = client.chat.completions.create(
             model="mixtral-8x7b-32768",
             max_tokens=512,
             messages=[
@@ -147,7 +147,7 @@ Be concise and practical."""
         
         return {
             'status': 'success',
-            'explanation': message.content[0].text,
+            'explanation': message.choices[0].message.content,
             'model': 'mixtral-8x7b-32768'
         }
     
@@ -180,7 +180,7 @@ Provide:
 
 Keep it concise and actionable."""
 
-        message = client.messages.create(
+        message = client.chat.completions.create(
             model="mixtral-8x7b-32768",
             max_tokens=512,
             messages=[
@@ -190,7 +190,7 @@ Keep it concise and actionable."""
         
         return {
             'status': 'success',
-            'summary': message.content[0].text,
+            'summary': message.choices[0].message.content,
             'model': 'mixtral-8x7b-32768'
         }
     
