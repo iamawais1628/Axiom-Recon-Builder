@@ -1,6 +1,7 @@
 import API_URL from '../config.js';
 import React, { useState } from 'react';
 import '../styles/ReconciliationTool.css';
+import AIAssistant from '../components/AIAssistant';
 
 export default function ReconciliationTool({ token, user }) {
   const [bankCsv, setBankCsv] = useState('');
@@ -341,7 +342,20 @@ export default function ReconciliationTool({ token, user }) {
                   </table>
                 </div>
               </div>
-            )}
+)}
+
+            {/* AI ASSISTANT - ADD THIS */}
+            <AIAssistant 
+              token={token}
+              sessionData={{
+                session_name: sessionName || 'Reconciliation',
+                total_matched: results.matched,
+                total_unmatched: results.unmatched,
+                match_rate: results.match_rate,
+                avg_confidence: results.average_confidence
+              }}
+              matchesData={results.matches}
+            />
           </section>
         )}
 
