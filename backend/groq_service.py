@@ -44,7 +44,7 @@ For each potential match, explain:
 Be concise and practical."""
 
         message = client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.1-70b-versatile",
             max_tokens=1024,
             messages=[
                 {"role": "user", "content": prompt}
@@ -91,7 +91,7 @@ For each rule, provide:
 Be specific and actionable."""
 
         message = client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.1-70b-versatile",
             max_tokens=1024,
             messages=[
                 {"role": "user", "content": prompt}
@@ -138,7 +138,7 @@ Analyze the differences and explain:
 Be concise and practical."""
 
         message = client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.1-70b-versatile",
             max_tokens=512,
             messages=[
                 {"role": "user", "content": prompt}
@@ -181,7 +181,7 @@ Provide:
 Keep it concise and actionable."""
 
         message = client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.1-70b-versatile",
             max_tokens=512,
             messages=[
                 {"role": "user", "content": prompt}
