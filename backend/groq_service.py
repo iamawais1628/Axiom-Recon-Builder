@@ -54,7 +54,7 @@ Be concise and practical."""
         return {
             'status': 'success',
             'analysis': message.choices[0].message.content,
-            'model': 'mixtral-8x7b-32768'
+            'model': 'llama-3.3-70b-versatile'
         }
     
     except Exception as e:
@@ -101,7 +101,7 @@ Be specific and actionable."""
         return {
             'status': 'success',
             'suggestions': message.choices[0].message.content,
-            'model': 'mixtral-8x7b-32768'
+            'model': 'llama-3.3-70b-versatile'
         }
     
     except Exception as e:
@@ -148,7 +148,7 @@ Be concise and practical."""
         return {
             'status': 'success',
             'explanation': message.choices[0].message.content,
-            'model': 'mixtral-8x7b-32768'
+            'model': 'llama-3.3-70b-versatile'
         }
     
     except Exception as e:
@@ -191,7 +191,7 @@ Keep it concise and actionable."""
         return {
             'status': 'success',
             'summary': message.choices[0].message.content,
-            'model': 'mixtral-8x7b-32768'
+            'model': 'llama-3.3-70b-versatile'
         }
     
     except Exception as e:
