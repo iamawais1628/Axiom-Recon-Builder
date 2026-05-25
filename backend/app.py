@@ -2,12 +2,12 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
-# from backend.groq_service import (
-#     analyze_unmatched_transactions,
-#     suggest_matching_rules,
-#     explain_mismatch,
-#     summarize_reconciliation
-# )
+from backend.groq_service import (
+    analyze_unmatched_transactions,
+    suggest_matching_rules,
+    explain_mismatch,
+    summarize_reconciliation
+)
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from functools import wraps
