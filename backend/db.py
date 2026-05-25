@@ -240,11 +240,11 @@ def save_reconciliation_session(session_name, total_bank, total_erp, matched, ma
         cur = conn.cursor()
         
         cur.execute('''
-            INSERT INTO reconciliation_sessions 
-            (user_id, session_name, total_matched, total_unmatched, match_rate, avg_confidence)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-        ''', (user_id, session_name, matched, total_erp - matched, match_rate, avg_confidence))
+    INSERT INTO reconciliation_sessions 
+    (name, matched_count, erp_count, match_rate, average_confidence)
+    VALUES (%s, %s, %s, %s, %s)
+    RETURNING id
+''', (session_name, matched, total_erp - matched, match_rate, avg_confidence))
         
         session_id = cur.fetchone()[0]
         conn.commit()
