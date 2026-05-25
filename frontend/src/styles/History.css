@@ -149,7 +149,7 @@
 /* ===== HISTORY CONTENT ===== */
 .history-content {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr auto;
   gap: 20px;
   margin-bottom: 32px;
 }
