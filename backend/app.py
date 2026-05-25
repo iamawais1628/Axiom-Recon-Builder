@@ -2,6 +2,12 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from backend.groq_service import (
+    analyze_unmatched_transactions,
+    suggest_matching_rules,
+    explain_mismatch,
+    summarize_reconciliation
+)
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from functools import wraps
@@ -1121,6 +1127,146 @@ def not_found(error):
 @app.errorhandler(500)
 def server_error(error):
     return jsonify({'error': 'Server error'}), 500
+
+
+# ===== ADD THESE IMPORTS TO THE TOP OF app.py =====
+# from backend.groq_service import (
+#     analyze_unmatched_transactions,
+#     suggest_matching_rules,
+#     explain_mismatch,
+#     summarize_reconciliation
+# )
+
+# ===== ADD THESE ENDPOINTS TO app.py (AFTER DASHBOARD ENDPOINTS) =====
+
+@app.route('/api/ai/analyze-matches', methods=['POST'])
+@token_required
+def ai_analyze_matches():
+    """Use AI to analyze and provide insights on matched transactions"""
+    try:
+        data = request.json
+        matches = data.get('matches', [])
+        
+        if not matches:
+            return jsonify({
+                'status': 'error',
+                'message': 'No matches to analyze'
+            }), 400
+        
+        # Prepare matches data
+        analysis_data = []
+        for match in matches:
+            analysis_data.append({
+                'bank_amount': match.get('bank_amount'),
+                'bank_description': match.get('bank_description'),
+                'erp_amount': match.get('erp_amount'),
+                'erp_description': match.get('erp_description'),
+                'confidence': match.get('confidence')
+            })
+        
+        # Call Groq service
+        result = analyze_unmatched_transactions(analysis_data)
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        print(f"Error in AI analyze: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/ai/suggest-rules', methods=['POST'])
+@token_required
+def ai_suggest_rules():
+    """Use AI to suggest matching rules based on session data"""
+    try:
+        data = request.json
+        session = data.get('session', {})
+        
+        if not session:
+            return jsonify({
+                'status': 'error',
+                'message': 'No session data provided'
+            }), 400
+        
+        # Prepare session data for analysis
+        session_data = {
+            'session_name': session.get('session_name'),
+            'total_matched': session.get('total_matched'),
+            'total_unmatched': session.get('total_unmatched'),
+            'match_rate': session.get('match_rate'),
+            'avg_confidence': session.get('avg_confidence')
+        }
+        
+        # Call Groq service
+        result = suggest_matching_rules([session_data])
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        print(f"Error in AI suggest rules: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/ai/explain-mismatch', methods=['POST'])
+@token_required
+def ai_explain_mismatch():
+    """Use AI to explain why two transactions don't match"""
+    try:
+        data = request.json
+        bank_tx = data.get('bank_transaction', {})
+        erp_tx = data.get('erp_transaction', {})
+        
+        if not bank_tx or not erp_tx:
+            return jsonify({
+                'status': 'error',
+                'message': 'Both transactions required'
+            }), 400
+        
+        # Call Groq service
+        result = explain_mismatch(bank_tx, erp_tx)
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        print(f"Error in AI explain: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/ai/summarize', methods=['POST'])
+@token_required
+def ai_summarize():
+    """Use AI to generate a summary of reconciliation results"""
+    try:
+        data = request.json
+        session = data.get('session', {})
+        
+        if not session:
+            return jsonify({
+                'status': 'error',
+                'message': 'No session data provided'
+            }), 400
+        
+        # Call Groq service
+        result = summarize_reconciliation(session)
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        print(f"Error in AI summarize: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
