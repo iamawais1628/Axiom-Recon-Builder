@@ -11,7 +11,6 @@ from backend.groq_service import (
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from functools import wraps
-from flask_cors import CORS
 
 import os
 from dotenv import load_dotenv
@@ -57,9 +56,6 @@ CORS(app, resources={
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
-CORS(app)  # Enable CORS
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
-
 # Initialize on startup
 init_db()
 init_upload_folder()
