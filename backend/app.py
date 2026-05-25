@@ -13,14 +13,6 @@ from flask_cors import CORS
 from functools import wraps
 from flask_cors import CORS
 
-# Enable CORS for all routes
-CORS(app, resources={
-    r"/api/*": {
-        "origins": ["https://axiom-recon-ai.vercel.app", "http://localhost:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
 import os
 from dotenv import load_dotenv
 from backend.auth import create_token, verify_token, validate_email, validate_password
@@ -57,6 +49,14 @@ from backend.rules_db import (
 load_dotenv()
 
 app = Flask(__name__)
+# Enable CORS for all routes
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["https://axiom-recon-ai.vercel.app", "http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 CORS(app)  # Enable CORS
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
