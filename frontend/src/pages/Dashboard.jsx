@@ -17,7 +17,7 @@ export default function Dashboard({ token, user }) {
   const fetchDashboardMetrics = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
+      const response = await fetch(`${API_URL}/api/dashboard/metrics`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
