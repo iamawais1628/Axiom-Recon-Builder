@@ -1129,15 +1129,8 @@ def server_error(error):
     return jsonify({'error': 'Server error'}), 500
 
 
-# ===== ADD THESE IMPORTS TO THE TOP OF app.py =====
-# from backend.groq_service import (
-#     analyze_unmatched_transactions,
-#     suggest_matching_rules,
-#     explain_mismatch,
-#     summarize_reconciliation
-# )
-
-# ===== ADD THESE ENDPOINTS TO app.py (AFTER DASHBOARD ENDPOINTS) =====
+# ===== CORRECTED AI ENDPOINTS FOR app.py =====
+# Replace the old AI endpoints with these:
 
 @app.route('/api/ai/analyze-matches', methods=['POST'])
 @token_required
@@ -1153,19 +1146,23 @@ def ai_analyze_matches():
                 'message': 'No matches to analyze'
             }), 400
         
-        # Prepare matches data
-        analysis_data = []
+        # Convert matches to bank and ERP transactions
+        bank_txs = []
+        erp_txs = []
         for match in matches:
-            analysis_data.append({
-                'bank_amount': match.get('bank_amount'),
-                'bank_description': match.get('bank_description'),
-                'erp_amount': match.get('erp_amount'),
-                'erp_description': match.get('erp_description'),
-                'confidence': match.get('confidence')
+            bank_txs.append({
+                'amount': match.get('bank_amount'),
+                'description': match.get('bank_desc'),
+                'date': match.get('bank_date', 'N/A')
+            })
+            erp_txs.append({
+                'amount': match.get('erp_amount'),
+                'description': match.get('erp_desc'),
+                'date': match.get('erp_date', 'N/A')
             })
         
-        # Call Groq service
-        result = analyze_unmatched_transactions(analysis_data)
+        # Call Groq service with correct parameters
+        result = analyze_unmatched_transactions(bank_txs, erp_txs)
         
         return jsonify(result), 200
     
@@ -1191,17 +1188,17 @@ def ai_suggest_rules():
                 'message': 'No session data provided'
             }), 400
         
-        # Prepare session data for analysis
-        session_data = {
-            'session_name': session.get('session_name'),
-            'total_matched': session.get('total_matched'),
-            'total_unmatched': session.get('total_unmatched'),
-            'match_rate': session.get('match_rate'),
-            'avg_confidence': session.get('avg_confidence')
-        }
+        # Create sample transactions for analysis
+        sample_transactions = [
+            {
+                'amount': session.get('total_matched', 0),
+                'description': 'Sample matched transaction',
+                'date': '2024-01-15'
+            }
+        ]
         
         # Call Groq service
-        result = suggest_matching_rules([session_data])
+        result = suggest_matching_rules(sample_transactions)
         
         return jsonify(result), 200
     
