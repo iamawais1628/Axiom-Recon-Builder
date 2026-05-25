@@ -18,7 +18,7 @@ export default function History({ token, user }) {
         setError('');
 
         // Use the same endpoint that Dashboard uses
-        const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
+        const response = await fetch(`${API_URL}/api/dashboard/metrics`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
