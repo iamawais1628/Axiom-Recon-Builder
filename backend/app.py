@@ -11,6 +11,16 @@ from backend.groq_service import (
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from functools import wraps
+from flask_cors import CORS
+
+# Enable CORS for all routes
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["https://axiom-recon-ai.vercel.app", "http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 import os
 from dotenv import load_dotenv
 from backend.auth import create_token, verify_token, validate_email, validate_password
